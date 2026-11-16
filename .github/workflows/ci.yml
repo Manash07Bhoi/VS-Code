@@ -116,6 +116,7 @@ jobs:
             GEMINI_API_KEY='' \
             GEMINI_MODEL=gemini-1.5-flash-latest \
             FRONTEND_ORIGIN=http://localhost:3000 \
+            RATE_LIMIT_MAX_AUTH=60 \
             SECURE_COOKIES='false' NODE_ENV=test LOG_LEVEL=error \
             node server.js > /tmp/backend.log 2>&1 &
           echo "Backend started"
@@ -190,6 +191,7 @@ jobs:
             GEMINI_API_KEY='' \
             GEMINI_MODEL=gemini-1.5-flash-latest \
             FRONTEND_ORIGIN=http://localhost:3000 \
+            RATE_LIMIT_MAX_AUTH=60 \
             SECURE_COOKIES='false' NODE_ENV=test LOG_LEVEL=error \
             node server.js > /tmp/backend-qa.log 2>&1 &
           echo "Backend started"

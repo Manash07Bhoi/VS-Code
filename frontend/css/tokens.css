@@ -16,18 +16,21 @@
   --text-secondary: #a6aebd;
   --text-muted: #7a8295;
 
-  /* Accent (violet/indigo) */
+  /* Accent (violet) — --accent-strong gives white-text contrast ≥ 5.7:1;
+     --accent-hover doubles as accessible link/outline text (≥ 5.8:1 on panels) */
   --accent: #7c5cff;
   --accent-hover: #9b7cff;
   --accent-active: #5e42d9;
+  --accent-strong: #5e42d9;
   --accent-bg: rgba(124, 92, 255, 0.12);
 
-  /* Semantic */
+  /* Semantic — --error-strong gives white-text contrast ≥ 4.8:1 on buttons */
   --success: #4ade80;
   --success-bg: rgba(74, 222, 128, 0.12);
   --warning: #fbbf24;
   --warning-bg: rgba(251, 191, 36, 0.12);
   --error: #f87171;
+  --error-strong: #dc2626;
   --error-bg: rgba(248, 113, 113, 0.12);
   --info: #60a5fa;
   --info-bg: rgba(96, 165, 250, 0.12);

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CodeSense AI — AI-Powered Code Review</title>
   <meta name="description" content="CodeSense AI is a desktop-browser code review workspace. Submit source, select a language, receive AI-assisted findings, and revisit saved reports." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="css/tokens.css" />
@@ -15,6 +16,18 @@
   <style>
     .monaco-finding-highlight { background: rgba(124, 92, 255, 0.25); border-radius: 2px; }
     .monaco-finding-inline { border-bottom: 2px solid var(--accent); }
+  </style>
+  <style>
+    /* Critical boot CSS: hides all SPA views until the router activates one,
+       preventing a stacked-views flash (layout shift) when render-blocking
+       stylesheets arrive
+       in a different order on throttled connections. */
+    .view:not(.active) { display: none !important; }
+    .view.active { display: flex; flex-direction: column; }
+    .shell { display: flex; flex-direction: column; min-height: 100vh; }
+    .shell-body { display: flex; flex: 1; min-height: 0; }
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    body { margin: 0; background: #0b0c10; color: #e8eaed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
   </style>
 </head>
 <body>
@@ -75,15 +88,15 @@
             </div>
             <div class="landing-features">
               <div class="landing-card">
-                <h4>Real code editor</h4>
+                <h2>Real code editor</h2>
                 <p>Monaco Editor with syntax highlighting for JavaScript, TypeScript, Python, Java, and C++.</p>
               </div>
               <div class="landing-card">
-                <h4>AI-assisted findings</h4>
+                <h2>AI-assisted findings</h2>
                 <p>Bug, security, performance, and code-quality findings with evidence and recommendations.</p>
               </div>
               <div class="landing-card">
-                <h4>Saved history</h4>
+                </h3>
                 <p>Every review is persisted to your account. Reopen, search, and delete reports anytime.</p>
               </div>
             </div>
@@ -107,7 +120,7 @@
                 <label class="label required">Password</label>
                 <div class="password-wrapper">
                   <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" required minlength="8" />
-                  <button type="button" class="password-toggle" aria-toggle="password" aria-label="Toggle password visibility">&#128065;</button>
+                  <button type="button" class="password-toggle" aria-pressed="false" aria-label="Toggle password visibility">&#128065;</button>
                 </div>
                 <p class="field-hint">At least 8 characters, including a letter and a number.</p>
               </div>
@@ -137,7 +150,7 @@
                 <label class="label required">Password</label>
                 <div class="password-wrapper">
                   <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required />
-                  <button type="button" class="password-toggle" aria-toggle="password" aria-label="Toggle password visibility">&#128065;</button>
+                  <button type="button" class="password-toggle" aria-pressed="false" aria-label="Toggle password visibility">&#128065;</button>
                 </div>
               </div>
               <button type="submit" class="btn btn-primary btn-full" id="login-submit">Sign in</button>

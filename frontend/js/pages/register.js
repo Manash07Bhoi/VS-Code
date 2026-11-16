@@ -107,6 +107,7 @@ function init() {
     regToggle.addEventListener('click', () => {
       showing = !showing;
       regPassword.type = showing ? 'text' : 'password';
+      regToggle.setAttribute('aria-pressed', showing ? 'true' : 'false');
       regToggle.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
       regToggle.textContent = showing ? '🙈' : '👁';
     });

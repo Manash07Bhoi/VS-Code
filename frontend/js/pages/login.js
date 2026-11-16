@@ -96,6 +96,7 @@ function init() {
     loginToggle.addEventListener('click', () => {
       showing = !showing;
       loginPassword.type = showing ? 'text' : 'password';
+      loginToggle.setAttribute('aria-pressed', showing ? 'true' : 'false');
       loginToggle.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
       loginToggle.textContent = showing ? '🙈' : '👁';
     });

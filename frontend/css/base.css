@@ -190,11 +190,11 @@ input, select, textarea {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent-strong);
   color: #fff;
-  border-color: var(--accent);
+  border-color: var(--accent-strong);
 }
-.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-primary:hover:not(:disabled) { background: #6a4ae0; }
 .btn-primary:active:not(:disabled) { background: var(--accent-active); }
 
 .btn-secondary {
@@ -205,18 +205,20 @@ input, select, textarea {
 .btn-secondary:hover:not(:disabled) { background: var(--surface-hover); }
 
 .btn-outline {
+  /* Text uses --accent-hover (≥ 5.8:1 on panel/1 contrast); border keeps
+     the brand accent (≥ 4.4:1 UI-component contrast). */
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-hover);
   border-color: var(--accent);
 }
 .btn-outline:hover:not(:disabled) { background: var(--accent-bg); }
 
 .btn-danger {
-  background: var(--error);
+  background: var(--error-strong);
   color: #fff;
-  border-color: var(--error);
+  border-color: var(--error-strong);
 }
-.btn-danger:hover:not(:disabled) { opacity: 0.9; }
+.btn-danger:hover:not(:disabled) { background: #b91c1c; }
 
 .btn-sm { padding: var(--space-1) var(--space-3); font-size: 0.875rem; }
 .btn-icon { padding: var(--space-2); border-radius: var(--radius-sm); }

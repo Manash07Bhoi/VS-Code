@@ -26,7 +26,7 @@
   border-radius: var(--radius);
   padding: var(--space-5);
 }
-.landing-card h4 { margin-bottom: var(--space-2); font-size: 1rem; }
+.landing-card h2 { margin-bottom: var(--space-2); font-size: 1rem; }
 .landing-card p { font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; }
 
 /* Editor page */
