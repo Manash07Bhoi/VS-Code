@@ -796,23 +796,38 @@
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
+  /* Slide-over drawer: floats over the editor area only, so the bottom
+     panel tabs and status bar stay reachable while the sidebar is open. */
   .wb-sidebar {
     position: absolute;
     left: 48px;
-    top: 0;
-    bottom: 0;
+    top: 36px;
+    bottom: auto;
+    max-height: min(70vh, calc(100vh - 220px));
     z-index: 50;
     box-shadow: var(--shadow);
     max-width: 80vw;
+    border-right: 1px solid var(--border-subtle);
   }
   .wb-activity .wb-badge { right: 6px; }
 }
 @media (max-width: 640px) {
   .wb-titlebar .wb-btn .btn-label { display: none; }
+  .wb-titlebar .wb-brand > span:last-child { display: none; } /* 'Workbench' subtitle */
   .wb-sidebar { width: min(260px, calc(100vw - 48px)); }
   .wb-statusbar .wb-status-item.hide-sm { display: none; }
+  .wb-statusbar .wb-status-left .wb-status-item:first-child { display: none; } /* workspace label */
+  .wb-statusbar .wb-status-right .wb-status-item:last-child { display: none; } /* theme (titlebar has it) */
+  .wb-statusbar .wb-status-item { padding: 0 5px; gap: 3px; }
   .wb-tab { min-width: 90px; max-width: 140px; }
   .wb-bottom { height: 180px; }
+}
+@media (max-width: 420px) {
+  /* Very small phones: keep only the essential status items. */
+  .wb-statusbar .wb-status-left .wb-status-item:nth-child(2) { display: none; } /* unsaved count */
+  .wb-statusbar .wb-status-right .wb-status-item:nth-child(1) { display: none; } /* language */
+  .wb-statusbar .wb-status-right .wb-status-item:nth-child(2) { display: none; } /* spaces */
+  .wb-activity { height: 40px; }
 }
 
 /* ---------- Reduced motion ---------- */

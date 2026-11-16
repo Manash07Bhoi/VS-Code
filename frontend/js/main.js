@@ -59,6 +59,9 @@ async function bootstrap() {
   });
 
   initRouter();
+  // Readiness marker for browser tests: set only after the router, navbar,
+  // and API bootstrap have completed.
+  window.__CODESENSE_READY = true;
   console.log('[MAIN] bootstrap end hash=', JSON.stringify(window.location.hash));
 }
 

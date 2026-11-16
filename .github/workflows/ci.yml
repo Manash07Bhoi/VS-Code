@@ -60,7 +60,9 @@ jobs:
 
       - name: Frontend syntax checks
         run: |
-          for f in frontend/js/pages/*.js frontend/js/app/*.js frontend/js/components/*.js frontend/js/main.js tests/e2e.js; do
+          for f in frontend/js/pages/*.js frontend/js/app/*.js frontend/js/components/*.js \
+                    frontend/js/workbench/*.js frontend/js/workbench/panels/*.js \
+                    frontend/js/main.js tests/e2e.js tests/responsive.spec.js playwright.config.js; do
             node --check "$f" || exit 1
           done
 
@@ -142,3 +144,78 @@ jobs:
           path: |
             /tmp/backend.log
           retention-days: 7
+
+  browser-qa:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    # Playwright browser QA on the real app (backend + frontend) across the
+    # five required viewport sizes. Runs on push to main and on PRs.
+    services:
+      mongodb:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      E2E_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend for browser QA
+        run: |
+          cd backend
+          PORT=3000 MONGODB_URI=mongodb://127.0.0.1:27017/codesense_ai_qa \
+            SESSION_SECRET=test-secret-do-not-use-in-production \
+            CSRF_SECRET=test-csrf-secret \
+            GEMINI_API_KEY='' \
+            GEMINI_MODEL=gemini-1.5-flash-latest \
+            FRONTEND_ORIGIN=http://localhost:3000 \
+            SECURE_COOKIES='false' NODE_ENV=test LOG_LEVEL=error \
+            node server.js > /tmp/backend-qa.log 2>&1 &
+          echo "Backend started"
+
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3000/api/v1/health/live >/dev/null 2>&1; then
+              echo "Backend healthy"; exit 0;
+            fi
+            sleep 2;
+          done
+          echo "Backend did not become healthy"; exit 1;
+
+      - name: Run Playwright browser QA (5 viewports)
+        env:
+          NODE_PATH: backend/node_modules
+        run: node backend/node_modules/@playwright/test/cli.js test --config playwright.config.js
+
+      - name: Upload browser QA evidence (screenshots + HTML report)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-qa-evidence
+          path: |
+            tests/artifacts/screenshots/
+            tests/artifacts/html-report/
+            /tmp/backend-qa.log
+          retention-days: 14

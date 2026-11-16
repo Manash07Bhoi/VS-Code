@@ -41,6 +41,11 @@ coverage/
 backend/tests/reports/
 tests/reports/
 
+# Playwright transient outputs (traces, retry results). Evidence screenshots
+# and the HTML report under tests/artifacts/ ARE committed deliberately.
+tests/artifacts/test-results/
+tests/artifacts/.last-run-*
+
 # Build/output
 dist/
 build/

@@ -71,15 +71,19 @@ app.use(expressSession({
   cookie: cookieConfig,
 }));
 
-app.use(generalLimiter);
-
 // --- Serve frontend static files (same origin) ---
+// Static assets are served BEFORE the general rate limiter: a single page
+// load fetches ~35 ES modules, and rate-limiting cacheable public assets
+// breaks application boot for users behind shared proxies/NAT (where all
+// visitors share one req.ip). API routes below remain fully rate-limited.
 const frontendDir = path.resolve(__dirname, '../../frontend');
 app.use(express.static(frontendDir));
 // SPA fallback: serve index.html for client-side routes (non-API)
 app.get(/^\/((?!api).)*$/, (_req, res) => {
   res.sendFile(path.resolve(frontendDir, 'index.html'));
 });
+
+app.use(generalLimiter);
 
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
