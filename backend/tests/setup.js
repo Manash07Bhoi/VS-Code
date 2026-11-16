@@ -1,15 +1,35 @@
 /**
  * CodeSense AI — Test setup helper.
  *
- * Connects the app to the running MongoDB (127.0.0.1:27017) using a test
- * database, configures environment variables, and starts the Express app.
- * Returns { app, stop }.
+ * Connects the app to the running MongoDB (127.0.0.1:27017) using a
+ * PER-TEST-FILE database, configures environment variables, and starts the
+ * Express app. Returns { app, stop }.
+ *
+ * Isolation rationale: `node --test` executes each test file as a separate
+ * process, CONCURRENTLY. Previously every file shared one database name and
+ * dropped it during setup, so a concurrently starting sibling file wiped the
+ * users/sessions of a file already mid-flight (observed in CI as an
+ * intermittent 401 on /api/v1/auth/me immediately after a successful login,
+ * while passing on slower local machines). Each file now derives a unique
+ * database name from its own file path, making concurrent runs safe.
  */
 
+const path = require('node:path');
 const mongoose = require('mongoose');
 
 let app = null;
-const testDbName = 'codesense_ai_test';
+
+// Derive a unique, file-scoped database name from the test file that is
+// running this process (node --test invokes each file as its own process,
+// so process.argv[1] is always the current test file).
+function deriveTestDbName() {
+  const testFile = process.argv[1] || 'standalone';
+  const base = path.basename(testFile, path.extname(testFile));
+  const safe = base.replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+  return `codesense_ai_test_${safe}`;
+}
+
+const testDbName = deriveTestDbName();
 
 async function start() {
   process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/' + testDbName;
@@ -45,6 +65,7 @@ async function start() {
 
 async function stop() {
   try {
+    await mongoose.connection.dropDatabase().catch(() => {});
     await mongoose.connection.close();
   } catch (e) {
     // ignore

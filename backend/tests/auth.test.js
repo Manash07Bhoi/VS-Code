@@ -7,6 +7,7 @@ const { start, stop } = require('./setup.js');
 const supertest = require('supertest');
 
 let app, mongod;
+let lastLoginSetCookie = null;
 
 async function csrfToken(agent) {
   const res = await agent.get('/api/v1/auth/csrf-token');
@@ -52,6 +53,7 @@ async function test() {
     const res = await agent
       .post('/api/v1/auth/login')
       .send({ email: 'alice@example.com', password: 'Password123' });
+    lastLoginSetCookie = res.headers['set-cookie'] || null;
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.body.user.email, 'alice@example.com');
   }
@@ -59,6 +61,14 @@ async function test() {
   // T-AUTH-04: get me (authenticated)
   {
     const res = await agent.get('/api/v1/auth/me');
+    if (res.status !== 200) {
+      // Diagnostic output: pinpoint which layer rejected the request (cookie
+      // missing vs session missing vs user lookup) when this fails in CI.
+      console.error('T-AUTH-04 diagnostics — /me status:', res.status);
+      console.error('T-AUTH-04 diagnostics — /me body:', JSON.stringify(res.body));
+      console.error('T-AUTH-04 diagnostics — Set-Cookie on login response was:',
+        lastLoginSetCookie ? lastLoginSetCookie.map((c) => c.split(';')[0].slice(0, 18) + '…') : '(none captured)');
+    }
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.body.user.email, 'alice@example.com');
     assert.ok(!res.body.user.passwordHash);
