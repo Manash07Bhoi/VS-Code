@@ -1,0 +1,87 @@
+/* CodeSense AI — Design system tokens. Dark-first developer workspace. */
+:root {
+  /* Surfaces */
+  --surface-bg: #0b0c10;
+  --surface-panel: #12141d;
+  --surface-elevated: #1a1d29;
+  --surface-hover: #232836;
+
+  /* Borders */
+  --border-subtle: #2a3040;
+  --border-focus: #7c5cff;
+  --border-input: #3a4156;
+
+  /* Text */
+  --text-primary: #e8eaed;
+  --text-secondary: #a6aebd;
+  --text-muted: #7a8295;
+
+  /* Accent (violet/indigo) */
+  --accent: #7c5cff;
+  --accent-hover: #9b7cff;
+  --accent-active: #5e42d9;
+  --accent-bg: rgba(124, 92, 255, 0.12);
+
+  /* Semantic */
+  --success: #4ade80;
+  --success-bg: rgba(74, 222, 128, 0.12);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --error: #f87171;
+  --error-bg: rgba(248, 113, 113, 0.12);
+  --info: #60a5fa;
+  --info-bg: rgba(96, 165, 250, 0.12);
+
+  /* Categories */
+  --cat-bug: #f472b6;
+  --cat-security: #f87171;
+  --cat-performance: #fbbf24;
+  --cat-quality: #60a5fa;
+
+  /* Sizing */
+  --radius: 8px;
+  --radius-sm: 4px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow: 0 4px 12px rgba(0,0,0,0.45);
+
+  /* Fonts */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'Fira Mono', 'Consolas', 'Monaco', monospace;
+
+  /* Transitions */
+  --transition-short: 150ms ease;
+  --transition: 250ms ease;
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+}
+
+[data-theme="light"] {
+  --surface-bg: #f7f7f9;
+  --surface-panel: #ffffff;
+  --surface-elevated: #f3f4f6;
+  --surface-hover: #e7e8ea;
+  --border-subtle: #d1d5db;
+  --border-focus: #7c5cff;
+  --border-input: #cbd5e1;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --accent-bg: rgba(124, 92, 255, 0.16);
+  --success-bg: rgba(74, 222, 128, 0.16);
+  --warning-bg: rgba(251, 191, 36, 0.16);
+  --error-bg: rgba(248, 113, 113, 0.16);
+  --info-bg: rgba(96, 165, 250, 0.16);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow: 0 4px 12px rgba(0,0,0,0.08);
+}

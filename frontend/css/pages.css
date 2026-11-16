@@ -1,0 +1,136 @@
+/* CodeSense AI — Page-specific styles */
+
+/* Landing */
+.landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-6);
+}
+.landing-title { font-size: 2.5rem; font-weight: 800; margin-bottom: var(--space-3); letter-spacing: -0.02em; }
+.landing-subtitle { font-size: 1.125rem; color: var(--text-secondary); max-width: 640px; margin: 0 auto var(--space-5); line-height: 1.6; }
+.landing-actions { display: flex; gap: var(--space-2); justify-content: center; flex-wrap: wrap; }
+.landing-features {
+  margin-top: var(--space-8);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  max-width: 900px;
+  width: 100%;
+}
+.landing-card {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+}
+.landing-card h4 { margin-bottom: var(--space-2); font-size: 1rem; }
+.landing-card p { font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; }
+
+/* Editor page */
+.editor-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-panel);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.editor-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.editor-left { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.editor-right {
+  width: 380px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-panel);
+  flex-shrink: 0;
+}
+
+/* Review page */
+.review-page { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
+.review-not-found, .review-unauthorized, .review-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+}
+
+/* History page */
+.history-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-panel);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.history-list { flex: 1; overflow-y: auto; padding: var(--space-3); }
+.history-item {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+  cursor: pointer;
+  transition: border-color var(--transition-short);
+}
+.history-item:hover { border-color: var(--border-focus); }
+.history-item.selected { border-color: var(--accent); background: var(--accent-bg); }
+.history-item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-2); margin-bottom: var(--space-1); }
+.history-item-title { font-weight: 700; font-size: 0.9375rem; }
+.history-item-meta { font-size: 0.8125rem; color: var(--text-muted); }
+.history-item-status { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+.history-empty, .history-no-match {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+}
+
+/* Settings page */
+.settings-page { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-5); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .editor-right { width: 300px; }
+  .shell-body { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-subtle); flex-direction: row; padding: 0 var(--space-3); overflow-x: auto; }
+  .main { min-height: 400px; }
+}
+@media (max-width: 600px) {
+  .editor-page { padding: var(--space-2); }
+  .landing-title { font-size: 1.75rem; }
+  .editor-toolbar { flex-wrap: wrap; }
+}

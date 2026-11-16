@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeSense AI — AI-Powered Code Review</title>
+  <meta name="description" content="CodeSense AI is a desktop-browser code review workspace. Submit source, select a language, receive AI-assisted findings, and revisit saved reports." />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+  <style>
+    .monaco-finding-highlight { background: rgba(124, 92, 255, 0.25); border-radius: 2px; }
+    .monaco-finding-inline { border-bottom: 2px solid var(--accent); }
+  </style>
+</head>
+<body>
+  <div id="toast"></div>
+  <div id="modal-overlay"></div>
+
+  <div class="shell">
+    <!-- Navbar -->
+    <nav class="navbar" aria-label="Main navigation">
+      <a href="#" class="nav-brand" data-route="landing" id="nav-brand">
+        <span class="brand-mark" aria-hidden="true">CS</span>
+        <span>CodeSense AI</span>
+      </a>
+      <div class="nav-spacer"></div>
+      <div class="nav-actions" id="nav-actions">
+        <div id="nav-public">
+          <a href="#" class="btn btn-outline btn-sm" data-route="login" id="btn-login">Sign in</a>
+          <a href="#" class="btn btn-primary btn-sm" data-route="register" id="btn-register">Create account</a>
+        </div>
+        <div id="nav-private" style="display:none;">
+          <div id="nav-account" class="btn btn-icon" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
+            <span id="nav-email" style="font-weight:600;"></span>
+            <span style="font-size:0.75rem;color:var(--text-muted);margin-left:var(--space-1);">&#9662;</span>
+          </div>
+          <div id="nav-account-menu" style="display:none;position:absolute;right:0;top:100%;margin-top:var(--space-2);background:var(--surface-panel);border:1px solid var(--border-subtle);border-radius:var(--radius);box-shadow:var(--shadow);min-width:200px;z-index:100;padding:var(--space-2);">
+            <div style="padding:var(--space-2)var(--space-3);font-size:0.8125rem;color:var(--text-muted);border-bottom:1px solid var(--border-subtle);margin-bottom:var(--space-2);"><span id="nav-menu-email" style="font-weight:600;color:var(--text-primary);display:block;margin-bottom:var(--space-1);"></span><span id="nav-menu-role">Account</span></div>
+            <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-1)var(--space-2);font-size:0.875rem;" data-route="dashboard" id="nav-dashboard">Dashboard</a>
+            <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-1)var(--space-2);font-size:0.875rem;" data-route="settings" id="nav-settings">Account settings</a>
+            <button class="btn btn-danger btn-sm btn-full" style="text-align:left;padding:var(--space-1)var(--space-2);font-size:0.875rem;" id="btn-logout">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="shell-body">
+      <aside class="sidebar" aria-label="Secondary navigation">
+        <div style="padding:var(--space-4);border-bottom:1px solid var(--border-subtle);">
+          <div style="font-weight:800;font-size:1.125rem;color:var(--text-primary);letter-spacing:-0.02em;">CodeSense AI</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:var(--space-1);">Review workspace</div>
+        </div>
+        <nav style="padding:var(--space-3);" aria-label="Workspace navigation">
+          <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;margin-bottom:var(--space-1);" data-route="dashboard">Dashboard</a>
+          <a href="#" class="btn btn-primary btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;margin-bottom:var(--space-1);" data-route="editor">New Review</a>
+          <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;margin-bottom:var(--space-1);" data-route="history">Review History</a>
+          <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;" data-route="settings">Settings</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- Landing -->
+        <div data-view="landing" class="view" id="view-landing">
+          <div class="landing">
+            <h1 class="landing-title">CodeSense AI</h1>
+            <p class="landing-subtitle">AI-assisted code review for learners and developers. Write or paste source, select a language, and receive structured findings with explanations and recommendations.</p>
+            <div class="landing-actions">
+              <a href="#" class="btn btn-primary" data-route="register">Create account</a>
+              <a href="#" class="btn btn-outline" data-route="login">Sign in</a>
+            </div>
+            <div class="landing-features">
+              <div class="landing-card">
+                <h4>Real code editor</h4>
+                <p>Monaco Editor with syntax highlighting for JavaScript, TypeScript, Python, Java, and C++.</p>
+              </div>
+              <div class="landing-card">
+                <h4>AI-assisted findings</h4>
+                <p>Bug, security, performance, and code-quality findings with evidence and recommendations.</p>
+              </div>
+              <div class="landing-card">
+                <h4>Saved history</h4>
+                <p>Every review is persisted to your account. Reopen, search, and delete reports anytime.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Register -->
+        <div data-view="register" class="view" id="view-register">
+          <div class="page-header">
+            <h1 class="page-title">Create account</h1>
+            <p class="page-subtitle">Register to start reviewing code.</p>
+          </div>
+          <div class="auth-card card">
+            <div id="reg-error" class="field-error" hidden></div>
+            <form id="form-register">
+              <div class="input-group full">
+                <label class="label required">Email</label>
+                <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email" required />
+              </div>
+              <div class="input-group full">
+                <label class="label required">Password</label>
+                <div class="password-wrapper">
+                  <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" required minlength="8" />
+                  <button type="button" class="password-toggle" aria-toggle="password" aria-label="Toggle password visibility">&#128065;</button>
+                </div>
+                <p class="field-hint">At least 8 characters, including a letter and a number.</p>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full" id="reg-submit">Create account</button>
+              <div id="reg-pending" class="mt-3" hidden style="font-size:0.875rem;color:var(--text-muted);">Creating account&hellip;</div>
+            </form>
+            <div class="auth-footer">
+              Already have an account? <a href="#" id="reg-to-login">Sign in</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Login -->
+        <div data-view="login" class="view" id="view-login">
+          <div class="page-header">
+            <h1 class="page-title">Sign in</h1>
+            <p class="page-subtitle">Sign in to access your reviews.</p>
+          </div>
+          <div class="auth-card card">
+            <div id="login-error" class="field-error" hidden></div>
+            <form id="form-login">
+              <div class="input-group full">
+                <label class="label required">Email</label>
+                <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" required />
+              </div>
+              <div class="input-group full">
+                <label class="label required">Password</label>
+                <div class="password-wrapper">
+                  <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required />
+                  <button type="button" class="password-toggle" aria-toggle="password" aria-label="Toggle password visibility">&#128065;</button>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full" id="login-submit">Sign in</button>
+              <div id="login-pending" class="mt-3" hidden style="font-size:0.875rem;color:var(--text-muted);">Signing in&hellip;</div>
+            </form>
+            <div class="auth-footer">
+              Don't have an account? <a href="#" id="login-to-register">Create account</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div data-view="dashboard" class="view" id="view-dashboard">
+          <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Your recent reviews. Start a new review from the editor.</p>
+          </div>
+          <div class="card mt-3">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div class="section-title">Recent reviews</div>
+                <div id="dashboard-count" class="text-muted text-sm"></div>
+              </div>
+              <button class="btn btn-primary" id="btn-new-review">New Review</button>
+            </div>
+          </div>
+          <div id="dashboard-loading" class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;">
+            <div class="spinner" style="width:24px;height:24px;border-width:3px;"></div>
+            <div class="mt-3">Loading your reviews&hellip;</div>
+          </div>
+          <div id="dashboard-error" class="card" hidden style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);">
+            <p class="text-muted">Unable to load your reviews.</p>
+            <button class="btn btn-outline mt-3" id="dashboard-retry">Retry</button>
+          </div>
+          <div id="dashboard-empty" class="card" hidden style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);text-align:center;">
+            <p class="text-muted">No reviews yet. Create your first review to get started.</p>
+            <button class="btn btn-primary mt-3" id="btn-empty-new-review">New Review</button>
+          </div>
+          <div id="dashboard-reviews" class="mt-3" hidden></div>
+        </div>
+
+        <!-- Editor -->
+        <div data-view="editor" class="view editor-page" id="view-editor">
+          <div class="editor-toolbar">
+            <div style="display:flex;align-items:center;gap:var(--space-2);flex:1;min-width:0;">
+              <label class="label visually-hidden">Language</label>
+              <select class="lang-select" id="editor-language">
+                <option>Loading languages&hellip;</option>
+              </select>
+            </div>
+            <div class="source-size-indicator" id="editor-source-size">0 bytes</div>
+          </div>
+          <div class="editor-main">
+            <div class="editor-left">
+              <div class="editor-surface">
+                <div id="editor-loading" class="editor-loading"><div class="spinner"></div><div class="mt-2">Initializing editor&hellip;</div></div>
+                <div id="editor-error" class="editor-error"></div>
+                <div id="monaco-container"></div>
+                <div id="editor-unavailable" class="editor-error" hidden style="padding:var(--space-5);">
+                  <p>The code editor could not be loaded.</p>
+                </div>
+              </div>
+              <div class="status-bar">
+                <span id="editor-status" class="status-pill status-idle">Ready</span>
+                <span style="font-size:0.75rem;">Desktop Chrome &amp; Firefox</span>
+              </div>
+            </div>
+            <div class="editor-right">
+              <div class="card section">
+                <div class="section-title">Submit</div>
+                <button class="btn btn-primary btn-full mt-3" id="editor-analyze">Analyze code</button>
+                <p class="field-hint mt-3">Source is sent to the AI provider for review. You are bound to the submitted source revision.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review report -->
+        <div data-view="review" class="view review-page" id="view-review">
+          <div class="page-header">
+            <button class="btn btn-outline btn-sm" id="review-back" style="margin-right:var(--space-3);">&larr; Back to history</button>
+            <h1 class="page-title">Review Report</h1>
+            <div style="margin-left:auto;">
+              <button class="btn btn-danger btn-sm" id="review-delete">Delete review</button>
+            </div>
+          </div>
+          <div id="review-loading" class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:40vh;">
+            <div class="spinner"></div><div class="mt-3">Loading report&hellip;</div>
+          </div>
+          <div id="review-error" class="card" hidden style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);text-align:center;">
+            <p class="text-muted" id="review-error-msg">Unable to load this review.</p>
+            <button class="btn btn-outline mt-3" id="review-error-retry">Retry</button>
+          </div>
+          <div id="review-not-found" class="card" hidden style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);text-align:center;">
+            <h2 class="mt-3">Review not found</h2>
+            <p class="text-muted">This review does not exist or you do not have access to it.</p>
+            <button class="btn btn-primary mt-3" id="review-nf-back">Back to history</button>
+          </div>
+          <div id="review-unauthorized" class="card" hidden style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);text-align:center;">
+            <h2 class="mt-3">Access denied</h2>
+            <p class="text-muted">You cannot view this review.</p>
+          </div>
+          <div id="report-content" class="mt-3" hidden>
+            <div class="report-header">
+              <div class="report-meta">
+                <span><strong>Language:</strong> <span id="review-language"></span></span>
+                <span><strong>Status:</strong> <span id="review-status"></span></span>
+                <span><strong>Reviewed:</strong> <span id="review-date"></span></span>
+              </div>
+              <div class="report-meta" id="review-completed-row" hidden>
+                <span><strong>Completed:</strong> <span id="review-completed"></span></span>
+              </div>
+            </div>
+            <h2 id="review-title"></h2>
+            <div class="report-summary" id="review-summary"></div>
+            <div class="report-limitation" id="review-limitation"></div>
+            <div class="section">
+              <div class="section-title">Findings (<span id="review-finding-count">0</span>)</div>
+              <div id="review-findings" class="finding-list"></div>
+            </div>
+            <div class="section mt-5">
+              <div class="section-title">Reviewed source</div>
+              <div class="editor-surface" style="height:260px;">
+                <pre id="review-source" style="padding:var(--space-3);font-family:var(--font-mono);font-size:0.8125rem;white-space:pre-wrap;overflow:auto;height:100%;margin:0;"></pre>
+              </div>
+              <button class="btn btn-outline btn-sm mt-2" id="review-copy-source">Copy source</button>
+            </div>
+            <div id="review-improved-panel" class="improved-panel hidden mt-5">
+              <div class="improved-header">Suggested improved code</div>
+              <pre id="review-improved-code" style="padding:var(--space-3);font-family:var(--font-mono);font-size:0.8125rem;white-space:pre-wrap;overflow:auto;"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div data-view="history" class="view" id="view-history">
+          <div class="page-header">
+            <h1 class="page-title">Review History</h1>
+            <p class="page-subtitle">Your saved reviews, scoped to your account.</p>
+          </div>
+          <div class="filter-bar">
+            <select id="history-filter-lang"></select>
+            <select id="history-filter-status">
+              <option value="">All statuses</option>
+              <option value="accepted">Accepted</option>
+              <option value="processing">Processing</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+            <select id="history-sort">
+              <option value="createdAt">Newest first</option>
+              <option value="createdAt" style="display:none;"></option>
+              <option value="updatedAt">Last updated</option>
+              <option value="language">Language</option>
+              <option value="status">Status</option>
+            </select>
+            <select id="history-order">
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+            <button class="btn btn-outline btn-sm" id="history-clear">Clear filters</button>
+            <button class="btn btn-outline btn-sm" id="history-retry">Retry</button>
+          </div>
+          <div id="history-loading" style="display:flex;align-items:center;justify-content:center;height:40vh;">
+            <div class="spinner"></div><div class="mt-3">Loading history&hellip;</div>
+          </div>
+          <div id="history-error" class="card" hidden style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);text-align:center;">
+            <p class="text-muted" id="history-error-msg">Unable to load history.</p>
+            <button class="btn btn-outline mt-3" id="history-error-retry">Retry</button>
+          </div>
+          <div id="history-empty" class="card" hidden style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);text-align:center;">
+            <h2 class="mt-3">No reviews yet</h2>
+            <p class="text-muted">Your review history will appear here.</p>
+            <button class="btn btn-primary mt-3" id="history-empty-new-review">New Review</button>
+          </div>
+          <div id="history-no-match" class="card" hidden style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-6);text-align:center;">
+            <h2 class="mt-3">No matches</h2>
+            <p class="text-muted">No reviews match your filters.</p>
+            <button class="btn btn-outline mt-3" id="history-clear-match">Clear filters</button>
+          </div>
+          <div id="history-count" class="mt-3 text-muted text-sm" style="display:flex;justify-content:space-between;"></div>
+          <div id="history-list" class="mt-3 hidden"></div>
+          <div class="pagination mt-3">
+            <button id="history-prev" class="btn btn-outline btn-sm" disabled>&larr; Prev</button>
+            <span id="history-page-info" class="text-muted text-sm px-2">Page 1</span>
+            <button id="history-next" class="btn btn-outline btn-sm" disabled>Next &rarr;</button>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div data-view="settings" class="view settings-page" id="view-settings">
+          <div class="page-header">
+            <h1 class="page-title">Account settings</h1>
+            <p class="page-subtitle">Manage your account and session.</p>
+          </div>
+          <div class="card">
+            <div class="section-title">Account</div>
+            <div class="setting-item">
+              <div class="setting-label">Email</div>
+              <span id="settings-email" style="font-family:var(--font-mono);"></span>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">Status</div>
+              <span id="settings-status"></span>
+            </div>
+          </div>
+          <div class="card mt-5">
+            <div class="section-title">Session</div>
+            <button class="btn btn-danger" id="settings-logout">Sign out</button>
+          </div>
+          <div id="settings-error" class="field-error mt-3" hidden></div>
+        </div>
+
+        <!-- 404 -->
+        <div data-view="404" class="view" id="view-404">
+          <div class="error-state">
+            <h2>Page not found</h2>
+            <p class="text-muted">The page you're looking for doesn't exist.</p>
+            <button class="btn btn-primary mt-3" id="nf-to-dashboard">Go to dashboard</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
