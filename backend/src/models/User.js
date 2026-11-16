@@ -7,7 +7,6 @@
  */
 
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema(
   {
@@ -44,12 +43,8 @@ const userSchema = new mongoose.Schema(
 
 // Indexes from real query patterns: unique normalized email (owner lookup).
 
-// Password hashing middleware (server-side only).
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('passwordHash')) {return next();}
-  // passwordHash is expected to already be a bcrypt hash when set via service.
-  next();
-});
+// Note: password hashing happens in the service layer (utils/crypto.js) before
+// persistence; no model-level save middleware is required.
 
 userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();

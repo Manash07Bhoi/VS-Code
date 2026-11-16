@@ -5,8 +5,6 @@
  * return actionable field feedback without echoing full source code.
  */
 
-const { ZodError } = require('zod');
-
 function validate(schema, source = 'body') {
   return function validationMiddleware(req, res, next) {
     let data;

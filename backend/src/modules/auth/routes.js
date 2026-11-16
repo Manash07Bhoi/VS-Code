@@ -64,7 +64,11 @@ router.post('/register', authLimiter, validate(registerSchema, 'body'), async (r
       throw err;
     }
 
-    // Establish secure session.
+    // Establish secure session. All session fields (including the CSRF
+    // token) are written BEFORE a single session save; the response is sent
+    // only after the store write confirms. No post-save session mutation is
+    // performed, so persistence never depends on implicit end-of-response
+    // auto-saves.
     req.session.regenerate((err) => {
       if (err) {
         logger.error('codesense-auth.session-regenerate-failed', { message: err.message });
@@ -75,14 +79,14 @@ router.post('/register', authLimiter, validate(registerSchema, 'body'), async (r
       req.session.userId = user._id.toString();
       req.session.email = user.email;
       req.session.createdAt = new Date().toISOString();
+      // Bind a fresh CSRF token to the regenerated session before saving.
+      req.session.csrfToken = crypto.randomBytes(32).toString('hex');
       req.session.save((saveErr) => {
         if (saveErr) {
           return res.status(500).json({
             error: { code: 'INTERNAL_ERROR', message: 'Session save failed.', requestId: req.requestId },
           });
         }
-        // Bind a fresh CSRF token to the regenerated session.
-        req.session.csrfToken = crypto.randomBytes(32).toString('hex');
         logger.info('codesense-auth.registered', { userId: user._id.toString(), email });
         return res.status(201).json({
           message: 'Account created.',
@@ -117,6 +121,9 @@ router.post('/login', authLimiter, validate(loginSchema, 'body'), async (req, re
     }
 
     // Rotate session identifier after login (session fixation resistance).
+    // All session fields (including the CSRF token) are written BEFORE a
+    // single session save; the response is sent only after the store write
+    // confirms. No post-save session mutation is performed.
     req.session.regenerate((err) => {
       if (err) {
         return res.status(500).json({
@@ -126,15 +133,21 @@ router.post('/login', authLimiter, validate(loginSchema, 'body'), async (req, re
       req.session.userId = user._id.toString();
       req.session.email = user.email;
       req.session.authenticatedAt = new Date().toISOString();
+      // Bind a fresh CSRF token to the regenerated session before saving.
+      req.session.csrfToken = crypto.randomBytes(32).toString('hex');
       req.session.save(async (saveErr) => {
         if (saveErr) {
           return res.status(500).json({
             error: { code: 'INTERNAL_ERROR', message: 'Session save failed.', requestId: req.requestId },
           });
         }
-        await updateLastAuthenticated(user._id);
-        // Bind a fresh CSRF token to the regenerated session.
-        req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+        try {
+          await updateLastAuthenticated(user._id);
+        } catch (updateErr) {
+          // Non-fatal: authentication metadata is best-effort; the session is
+          // already securely established.
+          logger.warn('codesense-auth.last-authenticated-update-failed', { message: updateErr.message });
+        }
         logger.info('codesense-auth.login', { userId: user._id.toString(), email });
         return res.json({
           message: 'Signed in.',
@@ -155,7 +168,11 @@ router.post('/logout', csrfMiddleware, requireAuth, (req, res, next) => {
     if (err) {
       return next(err);
     }
-    res.clearCookie('connect.sid', {
+    // Clear the actual session cookie. The cookie name must match the
+    // express-session `name` option in app.js ('cs.sid'); previously this
+    // cleared a nonexistent 'connect.sid' cookie, leaving the stale session
+    // cookie in the browser.
+    res.clearCookie('cs.sid', {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.SECURE_COOKIES === 'true',
