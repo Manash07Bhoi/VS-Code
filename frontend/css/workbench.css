@@ -37,6 +37,8 @@
   font-weight: 700;
   letter-spacing: -0.01em;
 }
+/* Official Concept 01 logo image in the workbench title bar. */
+.wb-titlebar .wb-brand img.brand-logo { display: block; }
 .wb-titlebar .wb-brand .brand-mark {
   display: inline-flex;
   align-items: center;

@@ -103,7 +103,7 @@ function render() {
     }
     right.appendChild(item(posText, { title: 'Cursor position' }));
 
-    right.appendChild(item('Spaces: 4', {
+    right.appendChild(item(`Spaces: ${editorGroup.getIndentation()}`, {
       title: 'Indentation (click to change)',
       onClick: () => { const { pickIndentation } = window.__wb || {}; if (pickIndentation) pickIndentation(); },
     }));

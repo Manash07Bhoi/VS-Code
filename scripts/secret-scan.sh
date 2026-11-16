@@ -5,6 +5,12 @@
 # and hardcoded credential assignments in production source. Deliberately
 # does NOT flag variable names that merely contain words like "token"
 # (e.g. csrfToken) or documented test fixtures, which caused false positives.
+#
+# `tests/artifacts/` is excluded from the value-pattern scan: those files are
+# machine-generated QA evidence (Lighthouse reports embed full-page screenshots
+# as base64 JPEG, whose random character sequences can coincidentally resemble
+# credential formats — verified false positives, e.g. "AKIA…" inside a data
+# URI). Source, config and documentation files remain fully scanned.
 
 set -u
 
@@ -16,7 +22,7 @@ if grep -rniE \
   --include='*.js' --include='*.json' --include='*.html' --include='*.css' \
   --include='*.yml' --include='*.yaml' --include='*.md' --include='*.toml' \
   --include='*.example' --include='*.txt' \
-  --exclude-dir=node_modules --exclude-dir=.git \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=artifacts \
   . ; then
   echo "Potential secret detected above (credential value pattern)."
   fail=1

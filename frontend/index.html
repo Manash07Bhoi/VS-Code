@@ -5,7 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CodeSense AI — AI-Powered Code Review</title>
   <meta name="description" content="CodeSense AI is a desktop-browser code review workspace. Submit source, select a language, receive AI-assisted findings, and revisit saved reports." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#05091F" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#080D2B" media="(prefers-color-scheme: light)" />
+  <link rel="canonical" href="https://codesenseai-review.netlify.app/" />
+
+  <!-- Open Graph / social preview (official Concept 01 brand artwork) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="CodeSense AI" />
+  <meta property="og:title" content="CodeSense AI — AI-Powered Code Review" />
+  <meta property="og:description" content="A VS Code-inspired browser-based developer workbench with AI-assisted code review, security insights and developer productivity tools." />
+  <meta property="og:url" content="https://codesenseai-review.netlify.app/" />
+  <meta property="og:image" content="https://codesenseai-review.netlify.app/assets/og-image-1200x630.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="CodeSense AI logo" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CodeSense AI — AI-Powered Code Review" />
+  <meta name="twitter:description" content="A VS Code-inspired browser-based developer workbench with AI-assisted code review, security insights and developer productivity tools." />
+  <meta name="twitter:image" content="https://codesenseai-review.netlify.app/assets/og-image-1200x630.jpg" />
+
+  <!-- Icons (official Concept 01 brand kit) -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/assets/icons/favicon-48x48.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="css/tokens.css" />
@@ -28,9 +55,22 @@
     .shell-body { display: flex; flex: 1; min-height: 0; }
     .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     body { margin: 0; background: #0b0c10; color: #e8eaed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    /* Branded boot splash: visible while ES modules load; removed by main.js. */
+    #boot-splash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #0b0c10; }
+    #boot-splash img { width: 64px; height: 64px; border-radius: 14px; }
+    #boot-splash .boot-label { color: #9aa0a6; font-size: 0.8125rem; letter-spacing: 0.04em; }
+    #boot-splash .boot-spinner { width: 22px; height: 22px; border: 2px solid rgba(154,160,166,0.3); border-top-color: #9aa0a6; border-radius: 50%; animation: boot-spin 0.9s linear infinite; }
+    @keyframes boot-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { #boot-splash .boot-spinner { animation: none; } }
   </style>
 </head>
 <body>
+  <!-- Branded boot splash (official Concept 01 logo); removed after bootstrap. -->
+  <div id="boot-splash" role="status" aria-label="Loading CodeSense AI">
+    <img src="/assets/brand/codesense-logo-128.png" srcset="/assets/brand/codesense-logo-256.png 2x" alt="" width="64" height="64" />
+    <div class="boot-label">CodeSense AI</div>
+    <div class="boot-spinner" aria-hidden="true"></div>
+  </div>
   <div id="toast"></div>
   <div id="modal-overlay"></div>
 
@@ -38,7 +78,7 @@
     <!-- Navbar -->
     <nav class="navbar" aria-label="Main navigation">
       <a href="#" class="nav-brand" data-route="landing" id="nav-brand">
-        <span class="brand-mark" aria-hidden="true">CS</span>
+        <img src="/assets/brand/codesense-logo-48.png" srcset="/assets/brand/codesense-logo-128.png 2x" alt="" width="28" height="28" class="brand-logo" />
         <span>CodeSense AI</span>
       </a>
       <div class="nav-spacer"></div>
@@ -64,9 +104,12 @@
 
     <div class="shell-body">
       <aside class="sidebar" aria-label="Secondary navigation">
-        <div style="padding:var(--space-4);border-bottom:1px solid var(--border-subtle);">
-          <div style="font-weight:800;font-size:1.125rem;color:var(--text-primary);letter-spacing:-0.02em;">CodeSense AI</div>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:var(--space-1);">Review workspace</div>
+        <div style="padding:var(--space-4);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:var(--space-2);">
+          <img src="/assets/brand/codesense-logo-48.png" srcset="/assets/brand/codesense-logo-128.png 2x" alt="" width="32" height="32" style="border-radius:8px;flex-shrink:0;" />
+          <div>
+            <div style="font-weight:800;font-size:1.125rem;color:var(--text-primary);letter-spacing:-0.02em;">CodeSense AI</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">Review workspace</div>
+          </div>
         </div>
         <nav style="padding:var(--space-3);" aria-label="Workspace navigation">
           <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;margin-bottom:var(--space-1);" data-route="dashboard">Dashboard</a>
@@ -80,6 +123,7 @@
         <!-- Landing -->
         <div data-view="landing" class="view" id="view-landing">
           <div class="landing">
+            <img src="/assets/brand/codesense-logo-128.png" srcset="/assets/brand/codesense-logo-256.png 2x" alt="CodeSense AI logo" width="96" height="96" style="border-radius:20px;box-shadow:0 8px 28px rgba(0,0,0,0.45);" />
             <h1 class="landing-title">CodeSense AI</h1>
             <p class="landing-subtitle">AI-assisted code review for learners and developers. Open the VS Code-inspired workbench, edit multi-file workspaces, and receive structured findings with explanations and recommendations.</p>
             <div class="landing-actions">
@@ -96,7 +140,7 @@
                 <p>Bug, security, performance, and code-quality findings with evidence and recommendations.</p>
               </div>
               <div class="landing-card">
-                </h3>
+                <h2>Saved review history</h2>
                 <p>Every review is persisted to your account. Reopen, search, and delete reports anytime.</p>
               </div>
             </div>
@@ -110,6 +154,10 @@
             <p class="page-subtitle">Register to start reviewing code.</p>
           </div>
           <div class="auth-card card">
+            <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);">
+              <img src="/assets/brand/codesense-logo-48.png" srcset="/assets/brand/codesense-logo-128.png 2x" alt="" width="32" height="32" style="border-radius:8px;" />
+              <span style="font-weight:700;">CodeSense AI</span>
+            </div>
             <div id="reg-error" class="field-error" hidden></div>
             <form id="form-register">
               <div class="input-group full">
@@ -140,6 +188,10 @@
             <p class="page-subtitle">Sign in to access your reviews.</p>
           </div>
           <div class="auth-card card">
+            <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);">
+              <img src="/assets/brand/codesense-logo-48.png" srcset="/assets/brand/codesense-logo-128.png 2x" alt="" width="32" height="32" style="border-radius:8px;" />
+              <span style="font-weight:700;">CodeSense AI</span>
+            </div>
             <div id="login-error" class="field-error" hidden></div>
             <form id="form-login">
               <div class="input-group full">
@@ -334,7 +386,7 @@
             <!-- Titlebar -->
             <div class="wb-titlebar">
               <div class="wb-brand">
-                <span class="brand-mark" aria-hidden="true">CS</span>
+                <img src="/assets/brand/codesense-logo-48.png" srcset="/assets/brand/codesense-logo-128.png 2x" alt="" width="22" height="22" style="border-radius:5px;flex-shrink:0;" />
                 <span>CodeSense AI</span>
                 <span class="text-muted" style="font-weight:400;font-size:11px;">Workbench</span>
               </div>
@@ -372,6 +424,7 @@
                 <div class="wb-editor-area" id="wb-editor-area">
                   <div class="wb-editor-host" id="wb-editor-host"></div>
                   <div class="wb-welcome" id="wb-welcome" hidden>
+                    <img src="/assets/brand/codesense-logo-128.png" srcset="/assets/brand/codesense-logo-256.png 2x" alt="" width="72" height="72" style="border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,0.45);" />
                     <h3>CodeSense AI Workbench</h3>
                     <div>A VS Code-inspired AI-powered browser-based developer workbench.</div>
                     <div class="kbd-combos">

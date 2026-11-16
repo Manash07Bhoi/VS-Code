@@ -7,7 +7,7 @@
 
 const mongoose = require('mongoose');
 const logger = require('../utils/logger');
-const { MONGODB_URI, NODE_ENV } = require('./env');
+const { MONGODB_URI } = require('./env');
 
 let connectionPromise = null;
 let connected = false;
@@ -20,7 +20,6 @@ function connectDatabase() {
       serverSelectionTimeoutMS: 8000,
       socketTimeoutMS: 45000,
       family: 4,
-      ...(NODE_ENV === 'development' ? {} : {}),
     });
     connected = true;
     logger.info('codesense-db.connected', {

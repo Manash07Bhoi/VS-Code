@@ -1,4 +1,4 @@
-# CodeSense AI — robots.txt
-# The application is a single-page app; the root document is the app itself.
 User-agent: *
 Allow: /
+
+Sitemap: https://codesenseai-review.netlify.app/sitemap.xml

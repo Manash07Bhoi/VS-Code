@@ -37,3 +37,47 @@
 ## Production note
 
 The deployed Netlify frontend serves the same static assets; its numbers will differ mainly by CDN latency (Monaco fetch) — no separate production audit has been executed in this release, and none is claimed.
+
+
+---
+
+# Re-audit — brand integration release (2026-11-16, second pass)
+
+**Tool:** Lighthouse 12.8.2, Chromium 157.0.8103.50 (headless, puppeteer-managed).
+**Target:** local release build — backend (Express, session/CSRF stack live, honest
+provider-unconfigured state) + frontend static assets at `http://127.0.0.1:3100`.
+**Reports committed:** `tests/artifacts/lighthouse/*.report.{json,html}` (6 reports:
+landing/login/register × desktop/mobile). Older differently-named report files from the
+first audit round were removed to avoid duplicate evidence.
+
+## Results
+
+| Page | Mode | Performance | Accessibility | Best Practices | SEO | FCP | LCP | TBT | CLS | Speed Index |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Landing (`/`) | desktop | **1.00** | **1.00** | 0.96 | **1.00** | 0.46 s | 0.71 s | 0 ms | 0.0000 | 0.46 s |
+| Landing (`/`) | mobile | **0.90** | **1.00** | 0.96 | **1.00** | 1.79 s | 3.46 s | 20 ms | 0.0001 | 1.79 s |
+| Login (`/#/login`) | desktop | **1.00** | **1.00** | 0.96 | **1.00** | — | — | — | — | — |
+| Login (`/#/login`) | mobile | **0.99** | **1.00** | 0.96 | **1.00** | 1.65 s | 1.95 s | 0 ms | 0.0001 | 1.65 s |
+| Register (`/#/register`) | desktop | **1.00** | **1.00** | 0.96 | **1.00** | — | — | — | — | — |
+| Register (`/#/register`) | mobile | **0.90** | **1.00** | 0.96 | **1.00** | 1.80 s | 3.47 s | 0 ms | 0.0001 | 1.80 s |
+
+## Issue found by this audit and FIXED during this pass
+
+- **`image-size-responsive` (Best Practices):** the first brand integration served the
+  24px logo PNG at a 28px CSS size. Fixed by serving 48px sources with
+  `srcset` 128px/256px 2x variants everywhere the logo is displayed. Verified: the audit
+  no longer flags any image; Best Practices improved 0.93 → 0.96 on desktop.
+
+## Accepted remaining deduction (unchanged, documented)
+
+- **Best Practices 0.96 — `errors-in-console`:** the SPA session boot-check
+  (`GET /api/v1/auth/me`) legitimately returns 401 for anonymous visitors; browsers log
+  failed network requests to the console. Returning 200-with-null instead would change
+  the API contract for a score — declined, as in the first audit round.
+
+## Scope notes (unchanged)
+
+- Authenticated workbench/review pages are not auditable by a stock Lighthouse run
+  (no login support); documented as future work, not claimed as done.
+- These are local-release-build numbers. The deployed Netlify frontend serves the same
+  static assets; no separate production audit is claimed.

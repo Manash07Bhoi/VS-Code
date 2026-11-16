@@ -40,9 +40,7 @@ function showView(viewId, params = {}) {
 }
 
 function navigate(path, params = {}) {
-  console.log('[ROUTER] navigate called with', JSON.stringify(path));
   if (!path.startsWith('/')) path = '/' + path;
-  console.log('[ROUTER] setting hash to', JSON.stringify(path));
   window.location.hash = path;
 }
 
@@ -57,7 +55,6 @@ function initRouter() {
 
 function handleRoute() {
   const fullPath = getCurrentPath();
-  console.log('[ROUTER] handleRoute path=', JSON.stringify(fullPath), 'hash=', JSON.stringify(window.location.hash));
   const path = fullPath.split('?')[0];
 
   if (PROTECTED.has(path)) {
@@ -68,8 +65,8 @@ function handleRoute() {
     }
   }
 
-  const viewId = path.slice(1) || 'landing';
-  console.log('[ROUTER] showing view=', JSON.stringify(viewId));
+  // Unknown routes fall back to the 404 view instead of a blank screen.
+  const viewId = ROUTES[path] || '404';
   showView(viewId, {});
 }
 

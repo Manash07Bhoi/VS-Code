@@ -19,20 +19,24 @@ const filterLang = document.getElementById('history-filter-lang');
 const filterStatus = document.getElementById('history-filter-status');
 const sortSelect = document.getElementById('history-sort');
 const orderSelect = document.getElementById('history-order');
-const pageInput = document.getElementById('history-page');
+const pageInfoEl = document.getElementById('history-page-info');
 const prevBtn = document.getElementById('history-prev');
 const nextBtn = document.getElementById('history-next');
 const clearBtn = document.getElementById('history-clear');
 const retryBtn = document.getElementById('history-retry');
+const retryErrorBtn = document.getElementById('history-error-retry');
+const clearMatchBtn = document.getElementById('history-clear-match');
+const emptyNewBtn = document.getElementById('history-empty-new-review');
 
 let languages = [];
 let currentParams = { page: 1, limit: 20, language: null, status: null, sort: 'createdAt', order: 'desc' };
-let loaded = false;
-
 function renderLoading(show) { loadingEl.hidden = !show; }
 
 function renderError(msg) {
-  errorEl.textContent = msg;
+  // Update the message paragraph, not the container — the container holds
+  // the Retry button, which must survive re-renders.
+  const msgEl = document.getElementById('history-error-msg');
+  if (msgEl) msgEl.textContent = msg || 'Unable to load history.';
   errorEl.hidden = false;
   listEl.hidden = true;
   emptyEl.hidden = true;
@@ -104,9 +108,10 @@ function renderList(reviews, total) {
   });
 
   // Pagination.
-  const totalPages = Math.ceil(total / currentParams.limit);
-  pageInput.value = currentParams.page;
-  pageInput.max = totalPages;
+  const totalPages = Math.max(1, Math.ceil(total / currentParams.limit));
+  if (pageInfoEl) {
+    pageInfoEl.textContent = `Page ${currentParams.page} of ${totalPages}`;
+  }
   prevBtn.disabled = currentParams.page <= 1;
   nextBtn.disabled = currentParams.page >= totalPages || totalPages === 0;
 }
@@ -212,13 +217,14 @@ function init() {
     currentParams.page += 1;
     load();
   });
-  if (pageInput) {
-    pageInput.addEventListener('change', (e) => {
-      const p = Math.max(1, Math.min(Number(pageInput.max || 1), Number(e.target.value) || 1));
-      currentParams.page = p;
-      load();
-    });
-  }
+  if (retryErrorBtn) retryErrorBtn.addEventListener('click', () => load());
+  if (clearMatchBtn) clearMatchBtn.addEventListener('click', () => {
+    if (clearBtn) clearBtn.click();
+  });
+  if (emptyNewBtn) emptyNewBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigate('/workbench');
+  });
   if (clearBtn) {
     clearBtn.addEventListener('click', (e) => {
       e.preventDefault();

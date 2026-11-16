@@ -45,7 +45,7 @@ jobs:
         env:
           MONGODB_URI: mongodb://127.0.0.1:27017/codesense_ai_test
           SESSION_SECRET: test-secret-do-not-use-in-production
-          CSRF_SECRET: test-csrf-secret
+          RATE_LIMIT_MAX_AUTH_IP: '500'
           GEMINI_API_KEY: ''
           GEMINI_MODEL: gemini-1.5-flash-latest
           FRONTEND_ORIGIN: http://localhost:3000
@@ -112,7 +112,7 @@ jobs:
           cd backend
           PORT=3000 MONGODB_URI=mongodb://127.0.0.1:27017/codesense_ai_e2e \
             SESSION_SECRET=test-secret-do-not-use-in-production \
-            CSRF_SECRET=test-csrf-secret \
+            RATE_LIMIT_MAX_AUTH_IP=500 \
             GEMINI_API_KEY='' \
             GEMINI_MODEL=gemini-1.5-flash-latest \
             FRONTEND_ORIGIN=http://localhost:3000 \
@@ -188,7 +188,7 @@ jobs:
           cd backend
           PORT=3000 MONGODB_URI=mongodb://127.0.0.1:27017/codesense_ai_qa \
             SESSION_SECRET=test-secret-do-not-use-in-production \
-            CSRF_SECRET=test-csrf-secret \
+            RATE_LIMIT_MAX_AUTH_IP=500 \
             GEMINI_API_KEY='' \
             GEMINI_MODEL=gemini-1.5-flash-latest \
             FRONTEND_ORIGIN=http://localhost:3000 \

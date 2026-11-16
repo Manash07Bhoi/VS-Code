@@ -1,5 +1,10 @@
 # CodeSense AI — Task Register
 
+> **HISTORICAL RECORD (2026-11-16):** This file is a preserved task tracker from an
+> earlier work session. Commit hashes, deployment IDs and statuses below were accurate
+> at that time but do NOT reflect the current repository state. See `README.md`,
+> `docs/testing/` and `docs/audits/FINAL_GAP_REGISTER.md` for current verified status.
+
 ## Baseline (Phase A) — COMPLETED
 - [x] Clone repo https://github.com/Manash07Bhoi/VS-Code.git (main, commit 7c3d94b)
 - [x] Inventory root files: README.md (20 bytes), presentation.pptx, both ZIPs

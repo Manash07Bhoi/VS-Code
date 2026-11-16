@@ -163,9 +163,11 @@ class GeminiAdapter {
 
   async analyze({ source, language, focus }) {
     const model = this.genAI.getGenerativeModel({ model: this.modelName });
+    // Replacer function: user source containing $&, $` or $' must be treated
+    // as literal text, not as String.replace replacement patterns.
     const systemPrompt = buildSystemPrompt(language, focus).replace(
       '${SOURCE}',
-      source
+      () => source
     );
     return this._generate(model, systemPrompt, (text) => this._parseAndValidate(text));
   }
@@ -181,7 +183,7 @@ class GeminiAdapter {
     const promptTemplate = action === 'explain' ?
       buildExplainPrompt(language, hasSelection) :
       buildImprovePrompt(language);
-    const prompt = promptTemplate.replace('${SOURCE}', source);
+    const prompt = promptTemplate.replace('${SOURCE}', () => source);
     const result = await this._generate(
       model,
       prompt,

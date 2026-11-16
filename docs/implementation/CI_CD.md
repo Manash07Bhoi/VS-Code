@@ -72,7 +72,7 @@ Runs when deployment secrets are absent. Emits a clear BLOCKED message; performs
 The backend is a Node.js/Express app (`npm start`) requiring:
 - `MONGODB_URI` (production MongoDB, least-privilege user, TLS)
 - `SESSION_SECRET` (per-environment random value)
-- `CSRF_SECRET`
+- `RATE_LIMIT_MAX_AUTH_IP` (per-IP auth attempt cap)
 - `FRONTEND_ORIGIN` (production frontend URL)
 - `SECURE_COOKIES=true`
 - Optional `GEMINI_API_KEY` / `GEMINI_MODEL` for live AI analysis

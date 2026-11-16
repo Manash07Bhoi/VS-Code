@@ -10,11 +10,11 @@ import { show as toastShow, error as toastError } from '../components/toast.js';
 const reviewsList = document.getElementById('dashboard-reviews');
 const emptyState = document.getElementById('dashboard-empty');
 const btnNewReview = document.getElementById('btn-new-review');
+const btnEmptyNewReview = document.getElementById('btn-empty-new-review');
+const countEl = document.getElementById('dashboard-count');
 const loadingEl = document.getElementById('dashboard-loading');
 const errorEl = document.getElementById('dashboard-error');
 const retryBtn = document.getElementById('dashboard-retry');
-
-let loaded = false;
 
 function renderLoading(show) {
   loadingEl.hidden = !show;
@@ -24,16 +24,23 @@ function renderLoading(show) {
 }
 
 function renderError(msg) {
-  errorEl.textContent = msg;
+  // Update the message text only — the container holds the Retry button.
+  const p = errorEl.querySelector('p');
+  if (p) p.textContent = msg || 'Unable to load your reviews.';
   errorEl.hidden = false;
   loadingEl.hidden = true;
   reviewsList.hidden = true;
   emptyState.hidden = true;
 }
 
-function renderReviews(reviews) {
+function renderReviews(reviews, total) {
   loadingEl.hidden = true;
   errorEl.hidden = true;
+  if (countEl) {
+    countEl.textContent = typeof total === 'number' && total > 0
+      ? `${total} review${total !== 1 ? 's' : ''} total`
+      : '';
+  }
   if (!reviews || reviews.length === 0) {
     emptyState.hidden = false;
     reviewsList.hidden = true;
@@ -84,14 +91,13 @@ function escapeHtml(text) {
 }
 
 async function load() {
-  if (loaded) return;
-  loaded = true;
   try {
     set({ loading: true });
     renderLoading(true);
     const res = await api.listReviews({ page: 1, limit: 10 });
-    set({ reviews: res.reviews || [], historyTotal: res.total || 0, historyPage: 1, historyLimit: 10 });
-    renderReviews(res.reviews || []);
+    const total = res.total || 0;
+    set({ reviews: res.reviews || [], historyTotal: total, historyPage: 1, historyLimit: 10 });
+    renderReviews(res.reviews || [], total);
   } catch (err) {
     if (err.status === 401) {
       navigate('/login');
@@ -110,11 +116,15 @@ function init() {
     e.preventDefault();
     navigate('/workbench');
   });
+  if (btnEmptyNewReview) {
+    btnEmptyNewReview.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate('/workbench');
+    });
+  }
   if (retryBtn) {
     retryBtn.addEventListener('click', () => load());
   }
-  // Load when view becomes active (handled by main).
-  window.addEventListener('codesense-view:dashboard', load);
 }
 
 

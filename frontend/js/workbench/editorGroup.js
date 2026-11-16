@@ -196,10 +196,24 @@ function getActiveContent() {
   return workspace.read(activePath);
 }
 
+// Current indentation (spaces) — kept in sync with the editor options so the
+// status bar can display the real value instead of a hardcoded one.
+let indentSize = 4;
+
+function getIndentation() {
+  return indentSize;
+}
+
+function setIndentation(size) {
+  const n = parseInt(size, 10);
+  if (![2, 4, 8].includes(n)) return;
+  indentSize = n;
+  if (editor) editor.updateOptions({ tabSize: n, insertSpaces: true });
+}
+
 function revealLine(path, line, { endLine = null, col = null } = {}) {
   openTab(path);
   requestAnimationFrame(() => {
-    if (!editor || !activePath === false) { /* activePath may be path */ }
     const model = editor && editor.getModel();
     if (!model) return;
     const total = model.getLineCount();
@@ -382,5 +396,6 @@ export {
   init, subscribe, openTab, setActive, closeTab, closeOthers, closeAll,
   getActive, getOpenTabs, getSelection, getActiveContent, revealLine,
   getMarkers, showDiff, closeDiff, isDiffVisible, triggerEditorAction, focus,
+  getIndentation, setIndentation,
   ensureLanguage,
 };

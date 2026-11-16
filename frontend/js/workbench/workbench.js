@@ -367,8 +367,7 @@ function bindEditorHelpers() {
   };
   window.__wbSetIndentation = (n) => {
     const size = n || 4;
-    const ed = window.__wbEditor;
-    if (ed) ed.updateOptions({ tabSize: size, insertSpaces: true });
+    editorGroup.setIndentation(size);
     log('workbench', `Indentation set to ${size} spaces`);
     statusBar.render();
   };

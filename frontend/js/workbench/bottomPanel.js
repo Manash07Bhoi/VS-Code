@@ -63,7 +63,6 @@ function render() {
     else if (activeTab === 'output') renderOutput();
     else if (activeTab === 'terminal') renderTerminal();
   }
-  updateProblemsStatus();
 }
 
 // --- Problems ---
@@ -247,12 +246,6 @@ function renderTerminal() {
     <code>docs/architecture/IDE_WORKBENCH_ARCHITECTURE.md</code>.</p>
   `;
   pane.appendChild(state);
-}
-
-// --- Problems status propagation ---
-
-function updateProblemsStatus() {
-  // Recomputed during renderProblems; on other tabs keep previous counts.
 }
 
 async function refreshProblems() {

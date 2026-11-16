@@ -7,13 +7,10 @@
  * graceful shutdown.
  */
 
-require('./src/config/env');
+const { PORT, HOST, NODE_ENV } = require('./src/config/env');
 const app = require('./src/app');
 const { connectDatabase, closeDatabase, isDatabaseConnected } = require('./src/config/database');
 const logger = require('./src/utils/logger');
-
-const PORT = parseInt(process.env.PORT || '3000', 10);
-const HOST = process.env.HOST || '0.0.0.0';
 
 let server = null;
 
@@ -26,7 +23,7 @@ async function start() {
       logger.info('codesense-backend.started', {
         port: PORT,
         host: HOST,
-        nodeEnv: process.env.NODE_ENV,
+        nodeEnv: NODE_ENV,
         database: isDatabaseConnected() ? 'connected' : 'disconnected',
       });
     });

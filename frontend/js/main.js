@@ -27,7 +27,6 @@ function collectViews() {
 const pageInitialized = new Set();
 
 async function bootstrap() {
-  console.log('[MAIN] bootstrap start hash=', JSON.stringify(window.location.hash));
   collectViews();
   Object.entries(viewEls).forEach(([viewId, el]) => {
     registerView(viewId, el);
@@ -45,29 +44,48 @@ async function bootstrap() {
   }
 
   setOnRouteChange((viewId) => {
-    if (pageInitialized.has(viewId)) return;
-    switch (viewId) {
-      case 'register': registerInit(); break;
-      case 'login': loginInit(); break;
-      case 'dashboard': dashboardInit(); dashboardLoad(); break;
-      case 'workbench': workbenchInit(); break;
-      case 'review': reviewInit(); reviewLoad(); break;
-      case 'history': historyInit(); historyLoad(); break;
-      case 'settings': settingsInit(); break;
+    // One-time per-view initialization.
+    if (!pageInitialized.has(viewId)) {
+      switch (viewId) {
+        case 'register': registerInit(); break;
+        case 'login': loginInit(); break;
+        case 'dashboard': dashboardInit(); break;
+        case 'workbench': workbenchInit(); break;
+        case 'review': reviewInit(); break;
+        case 'history': historyInit(); break;
+        case 'settings': settingsInit(); break;
+      }
+      pageInitialized.add(viewId);
     }
-    pageInitialized.add(viewId);
+    // Data refresh on every activation (covers revisits and changed query
+    // parameters, e.g. opening a different review id).
+    switch (viewId) {
+      case 'dashboard': dashboardLoad(); break;
+      case 'review': reviewLoad(); break;
+      case 'history': historyLoad(); break;
+    }
+    // Notify the activated view (pages may listen for refresh events).
+    window.dispatchEvent(new CustomEvent(`codesense-view:${viewId}`));
   });
 
   initRouter();
   // Readiness marker for browser tests: set only after the router, navbar,
   // and API bootstrap have completed.
   window.__CODESENSE_READY = true;
-  console.log('[MAIN] bootstrap end hash=', JSON.stringify(window.location.hash));
+
+  // Remove the branded boot splash once the shell is interactive.
+  const splash = document.getElementById('boot-splash');
+  if (splash) splash.remove();
 }
 
 window.__CODESENSE = { api, auth };
 
-// Log all navigate calls
-const _navigate = window.navigate;
+// Keep the account dropdown header in sync with the signed-in user.
+auth.subscribe((user) => {
+  const menuEmail = document.getElementById('nav-menu-email');
+  if (menuEmail) menuEmail.textContent = user ? user.email : '';
+  const menuRole = document.getElementById('nav-menu-role');
+  if (menuRole) menuRole.textContent = user ? 'Account' : '';
+});
 
 document.addEventListener('DOMContentLoaded', bootstrap);

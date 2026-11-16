@@ -20,7 +20,7 @@ This is why the failure was environment-dependent: runner core count/timing deci
 
 | Suite | Result |
 |---|---|
-| Backend (`npm test`: auth, languages, reviews, provider, assist) | **19 files / all passing** (18 historical tests + 11 new assist tests) |
+| Backend (`npm test`: auth, languages, reviews, provider, assist) | **19 tests across 5 test files / all passing** (a previous revision of this report mislabeled this as "19 files" — the accurate count is 19 tests in 5 files) |
 | ESLint | **0 errors** (14 pre-existing style warnings) |
 | Frontend syntax (`node --check` all modules incl. workbench) | pass |
 | Puppeteer E2E (`tests/e2e.js`, 29 checks, real browser + backend) | **all checks passed** (one environment-SKIP: Monaco tsWorker CDN fetch is sandbox-blocked; CI exercises it) |
@@ -48,3 +48,33 @@ This is why the failure was environment-dependent: runner core count/timing deci
 8. Monaco swallowed workbench shortcuts (Ctrl+Shift+A et al.) — shortcuts now registered in the capture phase.
 9. Static assets were rate-limited (broke app boot; see PLAYWRIGHT_REPORT.md).
 10. Bottom-panel resizer was positioned against the wrong containing block (fixed via `position: relative`).
+
+
+---
+
+## Re-verification — brand + security hardening release (2026-11-16, second pass)
+
+All suites re-run locally after the brand integration and security hardening changes
+(MongoDB 8.2.6 via in-memory instance, Node 24, backend on 127.0.0.1:3100):
+
+| Suite | Result |
+|---|---|
+| Backend ESLint | **0 errors** (14 pre-existing style warnings, unchanged) |
+| Backend tests (`npm test`) | **19 tests / 5 files, 19 pass / 0 fail** |
+| Frontend syntax (`node --check`, all modules incl. workbench) | pass |
+| Puppeteer E2E (`tests/e2e.js`, 29 checks) | **28 ok + 1 environment-skip** (Monaco tsWorker CDN fetch sandbox-blocked; same honest skip as before) |
+| Playwright responsive QA (7 tests, 5 viewports) | **7/7 passed** (42.7 s; screenshots regenerated with the integrated brand logo) |
+| `npm audit` | **0 vulnerabilities** |
+
+Changes covered by this re-verification: official Concept 01 brand assets integrated
+(favicon.ico, PNG favicons, apple-touch-icon, PWA manifest + 192/512 icons, OG/Twitter
+social preview, logo image in navbar/sidebar/landing/auth/titlebar/welcome/boot splash),
+PWA manifest + sitemap.xml + robots.txt sitemap reference, timing-safe CSRF token
+comparison, logout cookie-clear attributes now mirror the session cookie config,
+`String.replace` replacement-pattern hardening in the Gemini prompt builder, per-IP
+auth rate limiter (`RATE_LIMIT_MAX_AUTH_IP`, default 60/min) on top of the per-(ip,email)
+limiter, removal of the unused `CSRF_SECRET` config knob, `server.js` PORT/HOST read from
+the validated env module, frontend fixes (history pagination null-pointer, 404 route
+fallback, `renderError` no longer destroys Retry buttons, dead controls wired or removed,
+per-activation data refresh for dashboard/review/history, live indentation in the status
+bar, dead legacy `js/app/monaco.js` removed).

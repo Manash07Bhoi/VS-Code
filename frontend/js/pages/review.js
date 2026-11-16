@@ -12,7 +12,6 @@ import { show as toastShow, error as toastError } from '../components/toast.js';
 import { open as modalOpen } from '../components/modal.js';
 import { openScratch } from '../workbench/workbench.js';
 
-const container = document.getElementById('review-container');
 const notFoundEl = document.getElementById('review-not-found');
 const unauthorizedEl = document.getElementById('review-unauthorized');
 const errorEl = document.getElementById('review-error');
@@ -156,7 +155,10 @@ function renderError(msg) {
   notFoundEl.hidden = true;
   unauthorizedEl.hidden = true;
   errorEl.hidden = false;
-  errorEl.textContent = msg;
+  // Update the message paragraph, not the container — the container holds
+  // the Retry button.
+  const msgEl = document.getElementById('review-error-msg');
+  if (msgEl) msgEl.textContent = msg || 'Unable to load this review.';
   loadingEl.hidden = true;
 }
 function renderLoading(show) {
@@ -184,6 +186,10 @@ async function load() {
   } catch (err) {
     if (err.status === 401) {
       navigate('/login');
+      return;
+    }
+    if (err.status === 403) {
+      renderUnauthorized();
       return;
     }
     if (err.status === 404) {

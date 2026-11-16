@@ -35,7 +35,9 @@ async function start() {
   process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/' + testDbName;
   process.env.NODE_ENV = 'test';
   process.env.SESSION_SECRET = 'test-secret-do-not-use-in-production';
-  process.env.CSRF_SECRET = 'test-csrf-secret';
+  // node --test runs the auth/assist/reviews files concurrently from the same
+  // 127.0.0.1 — the per-IP auth limiter must not trip during a test run.
+  process.env.RATE_LIMIT_MAX_AUTH_IP = '500';
   // Intentionaly unset: no provider key in automated tests. This forces
   // providerAdapter() to return null so reviews take the honest
   // provider-unavailable path without any network call to Gemini.

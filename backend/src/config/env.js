@@ -72,7 +72,8 @@ const HOST = optional('HOST', '0.0.0.0');
 const NODE_ENV = optional('NODE_ENV', 'development');
 const LOG_LEVEL = optional('LOG_LEVEL', 'info');
 const SESSION_MAX_AGE_MS = optionalInt('SESSION_MAX_AGE_MS', 1000 * 60 * 60 * 24 * 7); // 7 days
-const CSRF_SECRET = optional('CSRF_SECRET', SESSION_SECRET);
+// Note: CSRF protection is session-token based (see src/middleware/csrf.js);
+// no separate CSRF secret is used or needed.
 const GEMINI_API_KEY = optional('GEMINI_API_KEY', '');
 const GEMINI_MODEL = optional('GEMINI_MODEL', '');
 const REVIEW_SOURCE_SIZE_LIMIT_BYTES = optionalInt('REVIEW_SOURCE_SIZE_LIMIT_BYTES', 64 * 1024); // 64 KiB
@@ -81,6 +82,9 @@ const GEMINI_MAX_RETRIES = optionalInt('GEMINI_MAX_RETRIES', 2);
 const GEMINI_MAX_OUTPUT_CHARS = optionalInt('GEMINI_MAX_OUTPUT_CHARS', 32768);
 const RATE_LIMIT_WINDOW_MS = optionalInt('RATE_LIMIT_WINDOW_MS', 60 * 1000);
 const RATE_LIMIT_MAX_AUTH = optionalInt('RATE_LIMIT_MAX_AUTH', 10);
+// IP-level cap across ALL auth attempts (any email) — bounds credential
+// stuffing from one source spraying many different accounts.
+const RATE_LIMIT_MAX_AUTH_IP = optionalInt('RATE_LIMIT_MAX_AUTH_IP', 60);
 const RATE_LIMIT_MAX_REVIEW = optionalInt('RATE_LIMIT_MAX_REVIEW', 30);
 const RATE_LIMIT_MAX_GENERAL = optionalInt('RATE_LIMIT_MAX_GENERAL', 100);
 const TRUST_PROXY = optionalBool('TRUST_PROXY', false);
@@ -93,7 +97,6 @@ const COOKIE_DOMAIN = optional('COOKIE_DOMAIN', '');
 module.exports = {
   MONGODB_URI,
   SESSION_SECRET,
-  CSRF_SECRET,
   GEMINI_API_KEY,
   GEMINI_MODEL,
   FRONTEND_ORIGIN,
@@ -108,6 +111,7 @@ module.exports = {
   GEMINI_MAX_OUTPUT_CHARS,
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_MAX_AUTH,
+  RATE_LIMIT_MAX_AUTH_IP,
   RATE_LIMIT_MAX_REVIEW,
   RATE_LIMIT_MAX_GENERAL,
   TRUST_PROXY,

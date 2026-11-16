@@ -1,5 +1,9 @@
 # CodeSense AI
 
+<p align="center">
+  <img src="frontend/assets/brand/codesense-logo-128.png" width="112" height="112" alt="CodeSense AI logo" />
+</p>
+
 **A VS Code-inspired AI-powered browser-based developer workbench.** Multi-file Monaco editing, an AI code-review studio, honest local change tracking, a command palette, and a live status bar — built on a secure Express/MongoDB backend with Gemini-powered review (server-side only; the API key never reaches the browser).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -65,10 +69,11 @@ Additional evidence: Playwright HTML report (`tests/artifacts/html-report/`) and
 - **Health checks** — liveness and readiness endpoints.
 
 ### Verified quality (this release)
-- Backend test suite: **19 files, all passing** (deterministic mocked provider tests included).
-- Browser QA: **Playwright 7/7** across five viewports (evidence committed) and **puppeteer e2e 29/29 checks**.
-- Lighthouse (mobile emulation, real backend+frontend): performance 0.90–0.99, **accessibility 1.00**, **SEO 1.00**, CLS 0.
-- Dependency audit: **0 vulnerabilities** (from 15 reproduced at baseline, incl. 1 critical — see `docs/security/VULNERABILITY_REGISTER.md`).
+- Backend test suite: **19 tests across 5 test files, all passing** (deterministic mocked provider tests included).
+- Browser QA: **Playwright 7/7** across five viewports (evidence committed) and **puppeteer e2e 28/29 checks passed in the sandbox** (1 honest environment-skip: the Monaco tsWorker CDN fetch is blocked by the sandbox network; CI exercises it).
+- Lighthouse (local release build, real backend+frontend, Lighthouse 12.8.2): desktop **P100 / A100 / BP96 / SEO100**; mobile **P90–99 / A100 / BP96 / SEO100**, CLS 0 (six reports committed under `tests/artifacts/lighthouse/`). The BP 0.96 deduction is the documented, accepted `errors-in-console` item (the anonymous session boot-check legitimately returns 401).
+- Dependency audit: **0 vulnerabilities** (reproduced with `npm audit` — see `docs/security/VULNERABILITY_REGISTER.md`).
+- Brand: the official Concept 01 logo kit is integrated — favicon (`.ico` + PNG sizes), PWA manifest & icons, Open Graph / Twitter social preview, apple-touch-icon, and the logo image in the navbar, sidebar, landing, auth pages, workbench title bar, welcome screen and boot splash.
 
 **Not implemented (by design):** terminal, code execution, debugging, real Git integration — each has a truthful unavailable state and documented architecture; see `docs/implementation/KNOWN_LIMITATIONS.md`. **Credential-dependent:** live Gemini analysis needs a real `GEMINI_API_KEY`.
 
@@ -78,7 +83,7 @@ Additional evidence: Playwright HTML report (`tests/artifacts/html-report/`) and
 
 | Layer | Technology |
 |---|---|
-| Frontend | Vanilla JavaScript (ES modules), HTML, CSS — no framework; Monaco Editor 0.52 via CDN (CSP allow-listed) |
+| Frontend | Vanilla JavaScript (ES modules), HTML, CSS — no framework; Monaco Editor 0.52 via CDN (CSP allow-listed); official Concept 01 brand assets (favicon, PWA icons, social preview) |
 | Backend | Node.js ≥ 20, Express 4, Zod v4 validation |
 | Database | MongoDB 8 with Mongoose |
 | AI | Google Gemini (`@google/generative-ai`), server-side only |
@@ -132,7 +137,7 @@ Configuration (all variables documented in `backend/.env.example`):
 ```bash
 cd backend
 npm run lint            # ESLint (0 errors)
-npm test                # 19 test files (needs MongoDB on 127.0.0.1:27017)
+npm test                # 19 tests across 5 test files (needs MongoDB on 127.0.0.1:27017)
 
 # Browser QA (backend running on :3000)
 node tests/e2e.js                                    # puppeteer e2e (29 checks)

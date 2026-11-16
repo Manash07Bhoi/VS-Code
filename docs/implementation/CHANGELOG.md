@@ -41,3 +41,35 @@
 - E2E automated on Chromium only; Firefox available for manual testing
 - No email verification, password reset, or account deletion endpoint
 - No brute-force lockout beyond rate limiting
+
+
+## 2026-11-16 — Brand integration & security hardening release
+
+### Added
+- Official Concept 01 brand kit integrated: favicon.ico + PNG favicons, apple-touch-icon,
+  PWA manifest (`manifest.webmanifest`) with 192/512 icons, Open Graph + Twitter social
+  preview (og-image-1200x630.jpg), logo images (with `srcset` high-DPI variants) in the
+  navbar, sidebar, landing, login/register cards, workbench title bar, welcome screen
+  and a branded boot splash.
+- `sitemap.xml` (public routes only) and a `Sitemap:` reference in `robots.txt`.
+- Per-IP authentication rate limiter (`RATE_LIMIT_MAX_AUTH_IP`, default 60/min) chained
+  ahead of the per-(ip,email) limiter to bound credential stuffing.
+- This release's QA evidence: 6 Lighthouse reports, regenerated Playwright screenshots,
+  updated testing reports and gap register.
+
+### Fixed
+- History page: null-pointer on the nonexistent `#history-page` element broke rendering
+  for any account with reviews; page info now shows "Page X of Y".
+- Router: unknown hash routes now fall back to the 404 view instead of a blank screen.
+- Dashboard/History/Review: `renderError()` no longer destroys the Retry buttons;
+  data refreshes on every view activation (stale review/dashboard content fixed).
+- All previously dead controls wired (empty-state buttons, clear-match, error retry,
+  account menu email) and dead DOM regions populated (`dashboard-count`, page info).
+- Status bar shows the live indentation value instead of a hardcoded "Spaces: 4".
+- Backend: timing-safe CSRF token comparison; logout cookie-clear attributes mirror the
+  session cookie configuration; Gemini prompt templating immune to `$&`/`` $` ``/`$'`
+  replacement patterns; `server.js` reads PORT/HOST from the validated env module.
+
+### Removed
+- Dead legacy module `frontend/js/app/monaco.js`, no-op code paths, debug console logs,
+  and the unused `CSRF_SECRET` configuration knob (env, examples, tests, CI).

@@ -45,3 +45,15 @@ cd backend && PORT=3000 MONGODB_URI=mongodb://127.0.0.1:27017/qa \
 E2E_BASE_URL=http://127.0.0.1:3000 \
   node backend/node_modules/@playwright/test/cli.js test --config playwright.config.js
 ```
+
+
+---
+
+## Re-verification — brand integration release (2026-11-16, second pass)
+
+**7 passed, 0 failed, 0 skipped** (42.7 s) — backend on 127.0.0.1:3100 (Node 24,
+MongoDB 8.2.6), Playwright 1.65.0 with Chromium 158 (headless shell 1254). All ten
+evidence screenshots were regenerated and now include the official Concept 01 logo in
+the navbar and workbench title bar. The per-viewport verifications (no horizontal
+overflow ≤ 768px, status bar real state, command palette, honest terminal state, theme
+toggle, view switching) all passed unchanged.

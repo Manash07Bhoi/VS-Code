@@ -14,9 +14,10 @@ const {
   registerSchema,
   loginSchema,
 } = require('../../validators/schemas');
-const { authLimiter } = require('../../middleware/rateLimit');
+const { authLimiter, authIpLimiter } = require('../../middleware/rateLimit');
 const { csrfMiddleware } = require('../../middleware/csrf');
 const { requireAuth, optionalAuth } = require('../../middleware/auth');
+const { COOKIE_SAMESITE, SECURE_COOKIES, COOKIE_DOMAIN } = require('../../config/env');
 const {
   createUser,
   findByEmail,
@@ -38,7 +39,9 @@ router.get('/csrf-token', optionalAuth, (req, res) => {
 });
 
 // Registration.
-router.post('/register', authLimiter, validate(registerSchema, 'body'), async (req, res, next) => {
+// authIpLimiter bounds all auth attempts per source address; authLimiter
+// additionally bounds attempts per (source, email) pair.
+router.post('/register', authIpLimiter, authLimiter, validate(registerSchema, 'body'), async (req, res, next) => {
   const { email, password } = req.validated;
   try {
     const existing = await findByEmail(email);
@@ -102,7 +105,7 @@ router.post('/register', authLimiter, validate(registerSchema, 'body'), async (r
 });
 
 // Login.
-router.post('/login', authLimiter, validate(loginSchema, 'body'), async (req, res, next) => {
+router.post('/login', authIpLimiter, authLimiter, validate(loginSchema, 'body'), async (req, res, next) => {
   const { email, password } = req.validated;
   try {
     const user = await findByEmail(email);
@@ -171,13 +174,19 @@ router.post('/logout', csrfMiddleware, requireAuth, (req, res, next) => {
     // Clear the actual session cookie. The cookie name must match the
     // express-session `name` option in app.js ('cs.sid'); previously this
     // cleared a nonexistent 'connect.sid' cookie, leaving the stale session
-    // cookie in the browser.
-    res.clearCookie('cs.sid', {
+    // cookie in the browser. The attributes must mirror the session cookie
+    // configuration (sameSite/secure/domain) or browsers will not clear the
+    // cookie in cross-site deployments.
+    const clearOptions = {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.SECURE_COOKIES === 'true',
+      sameSite: COOKIE_SAMESITE,
+      secure: SECURE_COOKIES,
       path: '/',
-    });
+    };
+    if (COOKIE_DOMAIN) {
+      clearOptions.domain = COOKIE_DOMAIN;
+    }
+    res.clearCookie('cs.sid', clearOptions);
     logger.info('codesense-auth.logout', { userId });
     return res.json({ message: 'Signed out.' });
   });

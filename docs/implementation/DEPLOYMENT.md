@@ -7,7 +7,7 @@
 3. **Gemini API key** — optional. Set `GEMINI_API_KEY` and `GEMINI_MODEL` in the backend environment for live AI analysis; key is backend-only. Backend starts without them and returns an honest provider-unavailable state.
 4. **Reverse proxy / TLS** — terminate HTTPS in front of the backend; set `SECURE_COOKIES=true` so session cookies get the `Secure` flag
 5. **Session secret** — set `SESSION_SECRET` to a long random value (different per environment)
-6. **CSRF secret** — set `CSRF_SECRET` (or it defaults to `SESSION_SECRET`)
+6. **CSRF** — session-token based; no separate secret is required (see `backend/src/middleware/csrf.js`)
 7. **Frontend origin** — set `FRONTEND_ORIGIN` to the production URL (no trailing slash) for CORS
 8. **Trust proxy** — set `TRUST_PROXY=true` only if behind a trusted reverse proxy; rate limiting uses `req.ip`
 
@@ -21,7 +21,7 @@
 | `TRUST_PROXY` | `true` (if behind a proxy) |
 | `MONGODB_URI` | Production MongoDB connection string |
 | `SESSION_SECRET` | Long random string (generate per deploy) |
-| `CSRF_SECRET` | Long random string (or reuse SESSION_SECRET) |
+| `RATE_LIMIT_MAX_AUTH_IP` | Per-IP cap across all auth attempts (default 60) |
 | `GEMINI_API_KEY` | Real Gemini API key. Optional — backend starts without it and returns an honest provider-unavailable state. |
 | `GEMINI_MODEL` | `gemini-1.5-flash-latest`. Optional when no API key is configured. |
 | `FRONTEND_ORIGIN` | `https://your-domain.com` |
