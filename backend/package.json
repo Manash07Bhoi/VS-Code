@@ -30,6 +30,7 @@
     "eslint": "^9.39.5",
     "globals": "^17.14.0",
     "mongodb-memory-server": "^11.3.0",
+    "playwright": "^1.49.0",
     "puppeteer": "^22.6.0",
     "supertest": "^7.0.0"
   }

@@ -58,3 +58,6 @@ debug-*.log
 
 # MongoDB memory server cache (if used)
 .cache/mongodb-memory-server/
+
+# Netlify local state
+.netlify/
