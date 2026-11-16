@@ -13,7 +13,7 @@ let connectionPromise = null;
 let connected = false;
 
 function connectDatabase() {
-  if (connectionPromise) return connectionPromise;
+  if (connectionPromise) {return connectionPromise;}
 
   connectionPromise = (async () => {
     await mongoose.connect(MONGODB_URI, {

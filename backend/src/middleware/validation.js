@@ -10,10 +10,10 @@ const { ZodError } = require('zod');
 function validate(schema, source = 'body') {
   return function validationMiddleware(req, res, next) {
     let data;
-    if (source === 'body') data = req.body;
-    else if (source === 'query') data = req.query;
-    else if (source === 'params') data = req.params;
-    else data = req.body;
+    if (source === 'body') {data = req.body;}
+    else if (source === 'query') {data = req.query;}
+    else if (source === 'params') {data = req.params;}
+    else {data = req.body;}
 
     const result = schema.safeParse(data);
     if (!result.success) {

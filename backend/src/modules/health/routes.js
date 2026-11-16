@@ -18,25 +18,18 @@ router.get('/live', (_req, res) => {
 router.get('/ready', async (_req, res) => {
   const db = isDatabaseConnected();
   const providerConfigured = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_MODEL);
-  const ready = db && providerConfigured;
 
-  if (!ready) {
-    return res.status(503).json({
-      status: 'not-ready',
-      service: 'codesense-backend',
-      checks: {
-        database: db ? 'connected' : 'disconnected',
-        provider: providerConfigured ? 'configured' : 'not-configured',
-      },
-    });
-  }
+  // Backend is ready when the database is connected. Provider configuration
+  // is reported separately and does not block readiness: reviews return an
+  // honest provider-unavailable state when Gemini is not configured.
+  const ready = db;
 
   res.json({
-    status: 'ready',
+    status: ready ? 'ready' : 'not-ready',
     service: 'codesense-backend',
     checks: {
-      database: 'connected',
-      provider: 'configured',
+      database: db ? 'connected' : 'disconnected',
+      provider: providerConfigured ? 'configured' : 'not-configured',
     },
   });
 });

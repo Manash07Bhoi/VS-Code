@@ -77,7 +77,7 @@ function findByMonacoId(monacoId) {
 
 function isReviewEnabled(canonicalId) {
   const lang = findByCanonicalId(canonicalId);
-  return !!(lang && lang.reviewEnabled && lang.aiReviewSupported);
+  return Boolean(lang && lang.reviewEnabled && lang.aiReviewSupported);
 }
 
 // Public view: no internal notes/flags the client shouldn't set.

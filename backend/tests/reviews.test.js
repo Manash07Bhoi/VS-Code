@@ -127,7 +127,7 @@ async function test() {
 
   // T-HIST-01 cross-user: register second user, try to access bob's review
   {
-      const agent2 = supertest.agent(app);
+    const agent2 = supertest.agent(app);
     await registerAndLogin(agent2, 'carol@example.com', 'Password123');
     const token = await csrfToken(agent2);
     await agent2
@@ -165,7 +165,7 @@ async function test() {
 
   // Unauthenticated access rejected
   {
-      const anon = supertest(app);
+    const anon = supertest(app);
     const res = await anon.get('/api/v1/reviews');
     assert.strictEqual(res.status, 401);
   }

@@ -16,8 +16,8 @@ async function findByIdAndOwner(reviewId, ownerId) {
 
 async function listByOwner(ownerId, { page, limit, language, status, sort, order }) {
   const filter = { owner: ownerId };
-  if (language) filter.language = language;
-  if (status) filter.status = status;
+  if (language) {filter.language = language;}
+  if (status) {filter.status = status;}
 
   const sortObj = { [sort]: order === 'asc' ? 1 : -1, _id: 1 }; // stable tie-breaker
 

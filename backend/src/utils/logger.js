@@ -10,7 +10,7 @@ const LOG_LEVELS = { error: 0, warn: 1, info: 2, debug: 3 };
 const MIN_LEVEL = LOG_LEVELS[(process.env.LOG_LEVEL || 'info').toLowerCase()] || LOG_LEVELS.info;
 
 function redact(value) {
-  if (value === undefined || value === null) return value;
+  if (value === undefined || value === null) {return value;}
   if (typeof value === 'string') {
     return value.length > 200 ? value.slice(0, 200) + '…[truncated]' : value;
   }
@@ -18,7 +18,7 @@ function redact(value) {
 }
 
 function log(level, message, fields = {}) {
-  if (LOG_LEVELS[level] > MIN_LEVEL) return;
+  if (LOG_LEVELS[level] > MIN_LEVEL) {return;}
   const entry = {
     level,
     message,
@@ -38,7 +38,7 @@ function log(level, message, fields = {}) {
   const safe = {};
   for (const [k, v] of Object.entries(entry)) {
     if (k === 'password' || k === 'token' || k === 'sessionId' || k === 'apiKey' ||
-        k === 'source' || k === 'fullSource' || k === 'providerKey' || k === 'databaseUri') continue;
+        k === 'source' || k === 'fullSource' || k === 'providerKey' || k === 'databaseUri') {continue;}
     safe[k] = redact(v);
   }
   console.log(JSON.stringify(safe));

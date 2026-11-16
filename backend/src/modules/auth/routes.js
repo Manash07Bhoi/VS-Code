@@ -16,7 +16,7 @@ const {
 } = require('../../validators/schemas');
 const { authLimiter } = require('../../middleware/rateLimit');
 const { csrfMiddleware } = require('../../middleware/csrf');
-const { requireAuth, optionalAuth, alreadyAuthenticated } = require('../../middleware/auth');
+const { requireAuth, optionalAuth } = require('../../middleware/auth');
 const {
   createUser,
   findByEmail,

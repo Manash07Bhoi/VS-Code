@@ -108,18 +108,16 @@ class GeminiAdapter {
 
     let lastError = null;
     for (let attempt = 1; attempt <= this.maxRetries + 1; attempt++) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
+      try {
         const result = await model.generateContent(
           [
             { role: 'user', parts: [{ text: systemPrompt }] },
           ],
-          { generationConfig }
+          { generationConfig, signal: controller.signal }
         );
-
-        clearTimeout(timeoutId);
 
         const response = result.response;
         const text = response.text();
@@ -160,6 +158,9 @@ class GeminiAdapter {
         });
         // Brief backoff before retry.
         await new Promise((r) => setTimeout(r, 500 * attempt));
+      } finally {
+        // Always clear the timeout to prevent timer leaks and resource exhaustion.
+        clearTimeout(timeoutId);
       }
     }
 
@@ -199,20 +200,18 @@ class GeminiAdapter {
 
     const normalizedFindings = [];
     const seenIds = new Set();
-    let lineCountHint = null; // we don't know exact line count here; validation occurs in service
-
     for (const raw of parsed.findings) {
       const finding = this._normalizeFinding(raw, seenIds);
-      if (finding) normalizedFindings.push(finding);
+      if (finding) {normalizedFindings.push(finding);}
     }
 
     return {
       findings: normalizedFindings,
       summary: typeof parsed.summary === 'string' ? parsed.summary : null,
       limitationNotice:
-        typeof parsed.limitationNotice === 'string'
-          ? parsed.limitationNotice
-          : 'This is an AI-assisted review. Findings are advisory and may miss issues or include false positives. Validate before acting.',
+        typeof parsed.limitationNotice === 'string' ?
+          parsed.limitationNotice :
+          'This is an AI-assisted review. Findings are advisory and may miss issues or include false positives. Validate before acting.',
       provider: 'gemini',
       model: this.modelName,
       promptVersion: PROMPT_VERSION,
@@ -221,29 +220,29 @@ class GeminiAdapter {
   }
 
   _normalizeFinding(raw, seenIds) {
-    if (!raw || typeof raw !== 'object') return null;
+    if (!raw || typeof raw !== 'object') {return null;}
 
     const findingId =
       raw.findingId || `f-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    if (seenIds.has(findingId)) return null;
+    if (seenIds.has(findingId)) {return null;}
     seenIds.add(findingId);
 
-    const category = ALLOWED_CATEGORIES.includes(raw.category)
-      ? raw.category
-      : 'code-quality';
-    const severity = ALLOWED_SEVERITIES.includes(raw.severity)
-      ? raw.severity
-      : null;
-    const confidence = ALLOWED_CONFIDENCES.includes(raw.confidence)
-      ? raw.confidence
-      : null;
+    const category = ALLOWED_CATEGORIES.includes(raw.category) ?
+      raw.category :
+      'code-quality';
+    const severity = ALLOWED_SEVERITIES.includes(raw.severity) ?
+      raw.severity :
+      null;
+    const confidence = ALLOWED_CONFIDENCES.includes(raw.confidence) ?
+      raw.confidence :
+      null;
 
-    const lineStart = raw.lineStart != null ? Number(raw.lineStart) : null;
-    const lineEnd = raw.lineEnd != null ? Number(raw.lineEnd) : null;
+    const lineStart = raw.lineStart !== null ? Number(raw.lineStart) : null;
+    const lineEnd = raw.lineEnd !== null ? Number(raw.lineEnd) : null;
 
     // Sanitize text fields: strip HTML/script-like content, bound length.
     const sanitize = (val) => {
-      if (val == null) return null;
+      if (val === null || val === undefined) {return null;}
       const s = String(val)
         .replace(/<[^>]*>/g, '')
         .replace(/javascript:/gi, '')
@@ -263,9 +262,9 @@ class GeminiAdapter {
       evidence: sanitize(raw.evidence) || null,
       lineStart: Number.isFinite(lineStart) && lineStart >= 1 ? lineStart : null,
       lineEnd:
-        Number.isFinite(lineEnd) && lineEnd >= 1 && (!lineStart || lineEnd >= lineStart)
-          ? lineEnd
-          : null,
+        Number.isFinite(lineEnd) && lineEnd >= 1 && (!lineStart || lineEnd >= lineStart) ?
+          lineEnd :
+          null,
       snippet: sanitize(raw.snippet) || null,
       caveats: sanitize(raw.caveats) || null,
     };

@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema(
 
 // Password hashing middleware (server-side only).
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('passwordHash')) return next();
+  if (!this.isModified('passwordHash')) {return next();}
   // passwordHash is expected to already be a bcrypt hash when set via service.
   next();
 });

@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run lint
+        working-directory: backend
+        run: npm run lint
+
+      - name: Run backend tests
+        working-directory: backend
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/codesense_ai_test
+          SESSION_SECRET: test-secret-do-not-use-in-production
+          CSRF_SECRET: test-csrf-secret
+          GEMINI_API_KEY: test-key
+          GEMINI_MODEL: gemini-1.5-flash-latest
+          FRONTEND_ORIGIN: http://localhost:3000
+          SECURE_COOKIES: 'false'
+          NODE_ENV: test
+        run: npm test
+
+      - name: Frontend syntax checks
+        run: |
+          for f in frontend/js/pages/*.js frontend/js/app/*.js frontend/js/components/*.js frontend/js/main.js; do
+            node --check "$f" || exit 1
+          done

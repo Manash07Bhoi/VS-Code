@@ -12,7 +12,7 @@ const MongoDBStore = require('connect-mongodb-session')(expressSession);
 const { requestId } = require('./middleware/requestId');
 const { errorHandler, notFound } = require('./middleware/error');
 const { generalLimiter } = require('./middleware/rateLimit');
-const { SECURE_COOKIES, FRONTEND_ORIGIN, SESSION_SECRET, SESSION_MAX_AGE_MS, MONGODB_URI } = require('./config/env');
+const { SECURE_COOKIES, COOKIE_SAMESITE, COOKIE_DOMAIN, FRONTEND_ORIGIN, SESSION_SECRET, SESSION_MAX_AGE_MS, MONGODB_URI } = require('./config/env');
 const healthRoutes = require('./modules/health/routes');
 const authRoutes = require('./modules/auth/routes');
 const reviewRoutes = require('./modules/reviews/routes');
@@ -23,17 +23,17 @@ app.set('trust proxy', process.env.TRUST_PROXY === 'true');
 
 app.use(helmet.contentSecurityPolicy({
   directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-eval'", 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
-    styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
-    imgSrc: ["'self'", 'data:'],
-    connectSrc: ["'self'", FRONTEND_ORIGIN || 'http://localhost:3000'],
-    workerSrc: ["'self'", 'blob:'],
-    childSrc: ["'self'", 'blob:'],
-    frameSrc: ["'self'"],
-    objectSrc: ["'none'"],
-    baseUri: ["'self'"],
-    formAction: ["'self'"],
+    defaultSrc: ['\'self\''],
+    scriptSrc: ['\'self\'', '\'unsafe-eval\'', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
+    styleSrc: ['\'self\'', '\'unsafe-inline\'', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
+    imgSrc: ['\'self\'', 'data:'],
+    connectSrc: ['\'self\'', FRONTEND_ORIGIN || 'http://localhost:3000'],
+    workerSrc: ['\'self\'', 'blob:'],
+    childSrc: ['\'self\'', 'blob:'],
+    frameSrc: ['\'self\''],
+    objectSrc: ['\'none\''],
+    baseUri: ['\'self\''],
+    formAction: ['\'self\''],
   },
 }));
 app.use(helmet.referrerPolicy({ policy: 'strict-origin-when-cross-origin' }));
@@ -50,13 +50,24 @@ app.use(requestId);
 const sessionStore = new MongoDBStore({ uri: MONGODB_URI, collection: 'sessions', ttl: SESSION_MAX_AGE_MS / 1000 });
 sessionStore.on('error', (err) => { console.error(JSON.stringify({ level:'error', message:'codesense-session.store-error', timestamp: new Date().toISOString(), service:'codesense-backend', error: err.message })); });
 
+const cookieConfig = {
+  httpOnly: true,
+  secure: SECURE_COOKIES,
+  sameSite: COOKIE_SAMESITE,
+  path: '/',
+  maxAge: SESSION_MAX_AGE_MS,
+};
+if (COOKIE_DOMAIN) {
+  cookieConfig.domain = COOKIE_DOMAIN;
+}
+
 app.use(expressSession({
   store: sessionStore,
   secret: SESSION_SECRET,
   name: 'cs.sid',
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, secure: SECURE_COOKIES, sameSite: 'lax', path: '/', maxAge: SESSION_MAX_AGE_MS },
+  cookie: cookieConfig,
 }));
 
 app.use(generalLimiter);

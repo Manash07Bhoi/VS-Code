@@ -162,7 +162,7 @@ async function submitReview({ userId, source, language, title, clientRequestId }
 
 async function getReview(reviewId, userId) {
   const review = await findByIdAndOwner(reviewId, userId);
-  if (!review) return null;
+  if (!review) {return null;}
   return review;
 }
 
