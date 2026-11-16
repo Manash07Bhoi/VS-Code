@@ -1,12 +1,12 @@
 {
   "name": "codesense-ai-backend",
   "version": "1.0.0",
-  "description": "CodeSense AI backend — Node.js + Express REST API with MongoDB/Mongoose, secure sessions, and Gemini AI code review.",
+  "description": "CodeSense AI backend \u2014 Node.js + Express REST API with MongoDB/Mongoose, secure sessions, and Gemini AI code review.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node --test tests/auth.test.js tests/languages.test.js tests/reviews.test.js tests/provider.test.js",
+    "test": "node --test tests/auth.test.js tests/languages.test.js tests/reviews.test.js tests/provider.test.js tests/assist.test.js",
     "lint": "eslint src tests server.js",
     "seed-indexes": "node scripts/ensure-indexes.js"
   },

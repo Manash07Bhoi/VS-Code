@@ -17,6 +17,7 @@ const healthRoutes = require('./modules/health/routes');
 const authRoutes = require('./modules/auth/routes');
 const reviewRoutes = require('./modules/reviews/routes');
 const languageRoutes = require('./modules/languages/routes');
+const assistRoutes = require('./modules/assist/routes');
 
 const app = express();
 app.set('trust proxy', process.env.TRUST_PROXY === 'true');
@@ -84,6 +85,7 @@ app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/languages', languageRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/assist', assistRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

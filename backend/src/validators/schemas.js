@@ -93,11 +93,24 @@ const listReviewsSchema = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
+// --- Assist (ephemeral explain/improve; not persisted) ---
+const assistSchema = z.object({
+  action: z
+    .enum(['explain', 'improve'], { error: 'Action must be explain or improve.' }),
+  source: z
+    .string({ error: 'Source code is required.' })
+    .min(1, 'Source code must not be empty.')
+    .max(128 * 1024, 'Source code is too large.'),
+  language: languageIdSchema,
+  hasSelection: z.boolean().optional().default(false),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
   createReviewSchema,
   listReviewsSchema,
+  assistSchema,
   emailSchema,
   passwordSchema,
   languageIdSchema,
