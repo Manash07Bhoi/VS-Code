@@ -63,6 +63,10 @@ async function setInput(page, selector, value) {
   await page.keyboard.type(value);
 }
 
+// Tracked so the exit handler can always close the browser process — no
+// Chromium leaks even when a mid-suite error aborts main() early.
+let activeBrowser = null;
+
 async function main() {
   const executablePath = findBrowserExecutable();
   if (!executablePath) {
@@ -71,14 +75,29 @@ async function main() {
     process.exit(1);
   }
   console.log('E2E browser executable:', executablePath);
-  const browser = await puppeteer.launch({
+  // System chromium (e.g. snap-shimmed /usr/bin/chromium on CI runners) can
+  // take longer than puppeteer's default 30s launch timeout to print its
+  // DevTools WS endpoint on a busy runner — observed as a CI failure. Give
+  // the launch 120s and retry exactly once so a slow cold start does not
+  // fail CI. A failed launch attempt does not leak a process: puppeteer
+  // kills the browser it spawned when the endpoint wait fails.
+  const launchOpts = {
     executablePath,
     headless: true,
+    timeout: 120000,
+    protocolTimeout: 180000,
     args: [
       '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
       '--disable-setuid-sandbox', '--no-zygote',
     ],
-  });
+  };
+  try {
+    activeBrowser = await puppeteer.launch(launchOpts);
+  } catch (launchErr) {
+    console.log('LOG: browser launch failed (' + launchErr.message + '); retrying once');
+    activeBrowser = await puppeteer.launch(launchOpts);
+  }
+  const browser = activeBrowser;
   const page = await browser.newPage();
   // Desktop viewport: the responsive sidebar overlay (<900px) intentionally
   // covers the main area on small screens; dedicated responsive checks run
@@ -304,14 +323,28 @@ async function main() {
   check(text.includes('Create account'), 'logout returns to public state');
 
   await browser.close();
+  activeBrowser = null; // closed cleanly; nothing to clean up at exit
   const criticalErrors = errors.filter((e) => !/favicon|net::ERR|Failed to load resource/i.test(e));
   console.log(criticalErrors.length ? 'console errors: ' + JSON.stringify(criticalErrors.slice(0, 5)) : 'no console errors');
   if (failures > 0) {
     console.log('E2E: ' + failures + ' CHECK(S) FAILED');
-    process.exit(1);
+    process.exitCode = 1;
   } else {
     console.log('E2E: all checks passed');
   }
 }
 
-main().catch((err) => { console.error('E2E error:', err.message); process.exit(1); });
+main()
+  .catch((err) => {
+    // Full stack trace for actionable CI failure logs.
+    console.error('E2E error:', err.stack || err.message);
+    return 1;
+  })
+  .then((code) => {
+    // Final safety net: close the browser on every exit path — success,
+    // failed checks, or a mid-suite error — so Chromium never leaks.
+    const cleanup = activeBrowser
+      ? activeBrowser.close().catch(() => { /* already closed or gone */ })
+      : Promise.resolve();
+    return cleanup.then(() => { if (code) process.exitCode = code; });
+  });
