@@ -1,27 +1,30 @@
 /**
- * CodeSense AI — Zod validation schemas.
+ * CodeSense AI — Zod validation schemas (zod v4).
  *
  * Authoritative request/response validation shapes shared across auth and
- * review boundaries.
+ * review boundaries. Migrated from zod v3: the v3 `required_error` param is
+ * silently ignored by zod v4 (custom missing-field messages would have been
+ * lost), so the v4 `error` param is used instead — verified to preserve the
+ * exact API error contract.
  */
 
 const z = require('zod');
 
 const emailSchema = z
-  .string({ required_error: 'Email is required.' })
+  .string({ error: 'Email is required.' })
   .min(1, 'Email is required.')
   .max(254, 'Email is too long.')
   .email('Enter a valid email address.');
 
 const passwordSchema = z
-  .string({ required_error: 'Password is required.' })
+  .string({ error: 'Password is required.' })
   .min(8, 'Password must be at least 8 characters.')
   .max(128, 'Password is too long.')
   .regex(/[A-Za-z]/, 'Password must contain at least one letter.')
   .regex(/[0-9]/, 'Password must contain at least one number.');
 
 const languageIdSchema = z
-  .string({ required_error: 'Language is required.' })
+  .string({ error: 'Language is required.' })
   .min(1, 'Language is required.')
   .max(64, 'Language identifier is too long.');
 
@@ -45,13 +48,13 @@ const registerSchema = z.object({
 
 const loginSchema = z.object({
   email: emailSchema,
-  password: z.string({ required_error: 'Password is required.' }),
+  password: z.string({ error: 'Password is required.' }),
 });
 
 // --- Review ---
 const createReviewSchema = z.object({
   source: z
-    .string({ required_error: 'Source code is required.' })
+    .string({ error: 'Source code is required.' })
     .min(1, 'Source code must not be empty.')
     .refine(
       (val) => Buffer.byteLength(val, 'utf8') > 0,
