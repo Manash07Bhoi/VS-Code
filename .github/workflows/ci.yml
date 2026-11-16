@@ -60,7 +60,7 @@ jobs:
 
       - name: Frontend syntax checks
         run: |
-          for f in frontend/js/pages/*.js frontend/js/app/*.js frontend/js/components/*.js frontend/js/main.js frontend/tests/e2e.js; do
+          for f in frontend/js/pages/*.js frontend/js/app/*.js frontend/js/components/*.js frontend/js/main.js tests/e2e.js; do
             node --check "$f" || exit 1
           done
 

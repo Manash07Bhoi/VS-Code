@@ -27,7 +27,9 @@ async function setInput(page, selector, value) {
 async function main() {
   const browser = await puppeteer.launch({
     executablePath: '/usr/bin/chromium',
-    headless: 'new',
+    // puppeteer >= 23 removed the legacy headless mode; 'new' is the default
+    // and passing the old string is no longer accepted in v25.
+    headless: true,
     args: [
       '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
       '--disable-setuid-sandbox', '--single-process', '--no-zygote',
