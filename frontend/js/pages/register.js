@@ -84,6 +84,11 @@ function init() {
           if (input) showFieldError(input, msg);
         });
         error('Please fix the errors above.');
+      } else if (err.status === 404 || err.status >= 500 || err.status == null) {
+        // Service unreachable or failing (404 on a static-only deployment,
+        // server error, or network failure) — never claim the account was
+        // created when it was not.
+        error('Unable to reach the registration service. Please check your connection and try again.');
       } else {
         error('Could not create account. Please try again.');
       }

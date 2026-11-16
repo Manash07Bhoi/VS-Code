@@ -72,9 +72,13 @@ function init() {
     } catch (err) {
       if (err.status === 429) {
         toastError('Too many attempts. Please wait and try again.');
-      } else {
-        // Generic credential error — no account enumeration.
+      } else if (err.status === 401 || err.code === 'UNAUTHENTICATED') {
+        // Genuine credential rejection — generic error, no account enumeration.
         toastError('Invalid email or password.');
+      } else {
+        // Any other failure (404/5xx/network) means the sign-in service could
+        // not be reached or failed — never blame the credentials for that.
+        toastError('Unable to reach the sign-in service. Please try again later.');
       }
     } finally {
       setPending(false);
