@@ -1,11 +1,45 @@
 /**
- * CodeSense AI — End-to-end browser test (Puppeteer + system Chromium).
+ * CodeSense AI — End-to-end browser test (Puppeteer + Chromium).
+ *
+ * The browser executable is auto-detected across environments:
+ * CI runners (Google Chrome), Linux dev boxes (chromium), and Playwright-
+ * managed caches. Fails honestly when no browser is found.
  */
 
 const puppeteer = require('puppeteer');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 const BASE = 'http://127.0.0.1:3000';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function findBrowserExecutable() {
+  const candidates = [
+    process.env.E2E_BROWSER_PATH,
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+  ].filter(Boolean);
+  for (const p of candidates) {
+    try { if (fs.existsSync(p)) return p; } catch (_e) { /* ignore */ }
+  }
+  // Playwright-managed chromium caches (glob the version directories).
+  const pwRoot = path.join(os.homedir(), '.cache', 'ms-playwright');
+  try {
+    if (fs.existsSync(pwRoot)) {
+      const dirs = fs.readdirSync(pwRoot).filter((d) => d.startsWith('chromium'));
+      for (const d of dirs) {
+        for (const rel of ['chrome-linux/chrome', 'chrome-linux64/chrome']) {
+          const p = path.join(pwRoot, d, rel);
+          if (fs.existsSync(p)) return p;
+        }
+      }
+    }
+  } catch (_e) { /* ignore */ }
+  return null;
+}
 
 async function waitForHash(page, fragment, timeout = 15000) {
   await page.waitForFunction((frag) => window.location.hash.includes(frag), { timeout }, fragment);
@@ -25,14 +59,21 @@ async function setInput(page, selector, value) {
 }
 
 async function main() {
+  const executablePath = findBrowserExecutable();
+  if (!executablePath) {
+    console.error('E2E error: no Chromium/Chrome executable found. ' +
+      'Set E2E_BROWSER_PATH or install Chromium/Google Chrome.');
+    process.exit(1);
+  }
+  console.log('E2E browser executable:', executablePath);
   const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium',
+    executablePath,
     // puppeteer >= 23 removed the legacy headless mode; 'new' is the default
     // and passing the old string is no longer accepted in v25.
     headless: true,
     args: [
       '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
-      '--disable-setuid-sandbox', '--single-process', '--no-zygote',
+      '--disable-setuid-sandbox', '--no-zygote',
     ],
   });
   const page = await browser.newPage();
