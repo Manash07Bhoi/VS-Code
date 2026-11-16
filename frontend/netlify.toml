@@ -13,16 +13,27 @@
   status = 200
   conditions = {Path = ["/*"]}
 
+# Static asset caching. This project has NO build step, so asset filenames
+# are not content-hashed — "immutable" long caching would keep serving stale
+# JS/CSS to returning visitors after a deploy. Instead: short max-age with
+# mandatory revalidation; Netlify's ETags make unchanged assets cheap 304s.
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=300, must-revalidate"
     X-Content-Type-Options = "nosniff"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=300, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+
+# Brand/image assets change rarely but are also not hash-named.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
     X-Content-Type-Options = "nosniff"
 
 [[headers]]

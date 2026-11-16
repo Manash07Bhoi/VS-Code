@@ -78,3 +78,26 @@ The backend handles `SIGTERM` and `SIGINT`: stops accepting HTTP requests, close
 - No account deletion endpoint; account lifecycle management is deferred.
 - No email delivery provider; registration is immediate without verification.
 - No live `GEMINI_API_KEY` is provided by default; configure one for AI analysis.
+
+
+## Static asset caching policy (updated this release)
+
+`frontend/netlify.toml` previously served `/js/*` and `/css/*` with
+`Cache-Control: public, max-age=31536000, immutable`. That directive is only safe when
+filenames are content-hashed (build-tool output). This project has **no build step**, so
+asset filenames are stable across deploys — an immutable year-long cache would keep
+serving stale JavaScript to returning visitors after every deploy (observed live: a
+deployed fix was invisible to a returning browser until cache eviction).
+
+Current policy:
+
+| Path | Cache-Control | Rationale |
+|---|---|---|
+| `/index.html` | `no-cache` | SPA entry must always revalidate |
+| `/js/*`, `/css/*` | `public, max-age=300, must-revalidate` | 5-minute freshness window; Netlify ETags turn unchanged assets into cheap 304s |
+| `/assets/*` | `public, max-age=3600, must-revalidate` | brand/image assets change rarely but are not hash-named either |
+
+**Honest note for returning visitors:** any browser that cached JS/CSS while the old
+`immutable` policy was live (before this release) may need one hard refresh
+(Ctrl+Shift+R) to pick up the updated modules; the stale-cache window cannot be revoked
+retroactively. New visitors and all future deploys use the corrected policy.
