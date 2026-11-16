@@ -86,8 +86,8 @@ Copy `backend/.env.example` to `backend/.env` and fill in real values. **Never c
 | `MONGODB_URI` | MongoDB connection string | Yes |
 | `SESSION_SECRET` | Long random session signing secret | Yes |
 | `CSRF_SECRET` | CSRF secret (defaults to SESSION_SECRET) | No |
-| `GEMINI_API_KEY` | Gemini API key (backend-only) | Yes |
-| `GEMINI_MODEL` | Gemini model name | Yes |
+| `GEMINI_API_KEY` | Gemini API key (backend-only). Optional — backend starts without it and returns an honest provider-unavailable state. | No |
+| `GEMINI_MODEL` | Gemini model name. Optional when no API key is configured. | No |
 | `FRONTEND_ORIGIN` | CORS origin (no trailing slash) | Yes |
 | `SECURE_COOKIES` | `true` in production (sets Secure cookie flag) | No |
 | `SESSION_MAX_AGE_MS` | Session cookie lifetime (default 7 days) | No |
@@ -126,7 +126,7 @@ Each language has:
 cd backend
 npm install
 cp .env.example .env
-# Edit .env with your MONGODB_URI, SESSION_SECRET, GEMINI_API_KEY, etc.
+# Edit .env with your MONGODB_URI, SESSION_SECRET, etc. GEMINI_API_KEY is optional.
 npm start
 ```
 
@@ -146,7 +146,7 @@ The frontend is served by the backend at the same origin — no separate build s
 ### Health checks
 
 - `GET /api/v1/health/live` — process liveness
-- `GET /api/v1/health/ready` — dependency readiness (database + provider configured)
+- `GET /api/v1/health/ready` — dependency readiness (database connectivity). AI provider configuration is reported separately (`provider: configured` or `not-configured`) and does not block readiness: reviews return an honest provider-unavailable state when Gemini is not configured.
 
 ## Test suites
 
@@ -171,7 +171,7 @@ Requires Chromium (or set `PUPPETEER_EXECUTABLE_PATH`). Tests the full journey: 
 ## Security model
 
 - Passwords hashed server-side with bcrypt (work factor 12); plaintext never stored or logged
-- Session cookie: `HttpOnly`, `SameSite=Lax`, `Secure` in production, 7-day max age
+- Session cookie: `HttpOnly`, `SameSite` configurable (`lax` for same-site, `none` for cross-site), `Secure` in production, 7-day max age
 - Session rotated on login and registration; destroyed on logout
 - CSRF double-submit token required on all state-changing requests
 - CORS restricted to `FRONTEND_ORIGIN` with credentials

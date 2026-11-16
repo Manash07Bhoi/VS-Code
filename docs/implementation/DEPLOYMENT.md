@@ -4,7 +4,7 @@
 
 1. **Node.js** >= 20 (LTS)
 2. **MongoDB** — accessible via `MONGODB_URI`; use a least-privilege database user; enable encrypted transport where supported
-3. **Gemini API key** — set `GEMINI_API_KEY` and `GEMINI_MODEL` in the backend environment; key is backend-only
+3. **Gemini API key** — optional. Set `GEMINI_API_KEY` and `GEMINI_MODEL` in the backend environment for live AI analysis; key is backend-only. Backend starts without them and returns an honest provider-unavailable state.
 4. **Reverse proxy / TLS** — terminate HTTPS in front of the backend; set `SECURE_COOKIES=true` so session cookies get the `Secure` flag
 5. **Session secret** — set `SESSION_SECRET` to a long random value (different per environment)
 6. **CSRF secret** — set `CSRF_SECRET` (or it defaults to `SESSION_SECRET`)
@@ -22,8 +22,8 @@
 | `MONGODB_URI` | Production MongoDB connection string |
 | `SESSION_SECRET` | Long random string (generate per deploy) |
 | `CSRF_SECRET` | Long random string (or reuse SESSION_SECRET) |
-| `GEMINI_API_KEY` | Real Gemini API key |
-| `GEMINI_MODEL` | `gemini-1.5-flash-latest` |
+| `GEMINI_API_KEY` | Real Gemini API key. Optional — backend starts without it and returns an honest provider-unavailable state. |
+| `GEMINI_MODEL` | `gemini-1.5-flash-latest`. Optional when no API key is configured. |
 | `FRONTEND_ORIGIN` | `https://your-domain.com` |
 | `SECURE_COOKIES` | `true` |
 | `SESSION_MAX_AGE_MS` | `604800000` (7 days) |
@@ -41,12 +41,12 @@ npm install --production
 npm start
 ```
 
-The backend performs fail-fast environment validation: if `MONGODB_URI`, `SESSION_SECRET`, `GEMINI_API_KEY`, `GEMINI_MODEL`, or `FRONTEND_ORIGIN` is missing, the process exits with an error.
+The backend performs fail-fast environment validation: if `MONGODB_URI`, `SESSION_SECRET`, or `FRONTEND_ORIGIN` is missing, the process exits with an error. `GEMINI_API_KEY` and `GEMINI_MODEL` are optional: the backend starts without them and returns an honest provider-unavailable state for review requests.
 
 ## Health checks
 
 - `GET /api/v1/health/live` — use for load balancer liveness
-- `GET /api/v1/health/ready` — use for readiness (checks database + provider configuration)
+- `GET /api/v1/health/ready` — use for readiness (checks database connectivity). AI provider configuration is reported separately (`provider: configured` or `not-configured`) and does not block readiness.
 
 ## Database indexes
 
@@ -64,7 +64,7 @@ The backend handles `SIGTERM` and `SIGINT`: stops accepting HTTP requests, close
 
 - [ ] `SECURE_COOKIES=true` (HTTPS in production)
 - [ ] `SESSION_SECRET` is a strong random value, not the example
-- [ ] `GEMINI_API_KEY` is set and not committed to version control
+- [ ] `GEMINI_API_KEY` is set (optional) and not committed to version control; configure only if live AI analysis is required
 - [ ] `.env` is excluded via `.gitignore`
 - [ ] `FRONTEND_ORIGIN` matches the production domain exactly
 - [ ] TLS terminates before the backend (or the backend serves HTTPS directly)

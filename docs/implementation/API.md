@@ -77,11 +77,11 @@ Delete a review. Requires `requireAuth` + CSRF. Owner-scoped in the DB query.
 
 ## Health
 
-### GET /health/live
+### GET /api/v1/health/live
 Process liveness. `200 { status: 'ok', service: 'codesense-backend' }`.
 
-### GET /health/ready
-Dependency readiness. `200 { status: 'ready', checks: { database, provider } }` or `503 { status: 'not-ready', ... }`. Provider readiness means `GEMINI_API_KEY` and `GEMINI_MODEL` are configured — key value is never disclosed.
+### GET /api/v1/health/ready
+Dependency readiness. `200 { status: 'ready', checks: { database, provider } }` or `503 { status: 'not-ready', checks: { database, provider } }`. Readiness requires database connectivity only. `provider` reports `configured` when `GEMINI_API_KEY` and `GEMINI_MODEL` are set, otherwise `not-configured`; this does not block readiness. Key value is never disclosed.
 
 ## Error codes
 

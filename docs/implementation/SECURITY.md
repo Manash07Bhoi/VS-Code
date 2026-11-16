@@ -5,7 +5,7 @@
 - Passwords hashed server-side with bcrypt (work factor 12). Plaintext passwords are never stored, logged, or returned.
 - Email normalized to lowercase and trimmed; unique constraint enforced at the DB level.
 - Generic login/registration errors — no account enumeration (duplicate email returns generic `created: false`).
-- Session cookie `cs.sid`: `HttpOnly`, `SameSite=Lax`, `Secure` when `SECURE_COOKIES=true` (production), 7-day max age.
+- Session cookie `cs.sid`: `HttpOnly`, `SameSite` configurable via `COOKIE_SAMESITE` (`lax` for same-site, `none` for cross-site), `Secure` when `SECURE_COOKIES=true` (production; required when `SameSite=None`), 7-day max age.
 - Session rotated on login and registration (session fixation resistance).
 - Session destroyed and cookie cleared on logout.
 - Client-side auth state derived solely from `api.me()` and login success; never read directly from the cookie.

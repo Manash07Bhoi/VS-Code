@@ -8,8 +8,8 @@ Gemini is the primary AI provider, accessed through the `@google/generative-ai` 
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `GEMINI_API_KEY` | Gemini API key (backend-only, required) | — |
-| `GEMINI_MODEL` | Model name | `gemini-1.5-flash-latest` |
+| `GEMINI_API_KEY` | Gemini API key (backend-only). Optional — backend starts without it and returns an honest provider-unavailable state. | — |
+| `GEMINI_MODEL` | Model name. Optional when no API key is configured. | `gemini-1.5-flash-latest` |
 | `GEMINI_TIMEOUT_MS` | Request timeout | 60000 |
 | `GEMINI_MAX_RETRIES` | Retry count for transient failures | 2 |
 | `GEMINI_MAX_OUTPUT_CHARS` | Max output characters | 32768 |

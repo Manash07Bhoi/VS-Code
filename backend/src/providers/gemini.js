@@ -73,7 +73,7 @@ Rules:
 - Do not include markdown fences, prose, or text outside the JSON object.
 - Do not invent APIs, files, or execution results.
 
-SOURCE CODE TO REVIEW (language: \${LANGUAGE_PLACEHOLDER}):
+SOURCE CODE TO REVIEW (language: ${language}):
 <<SOURCE_START>>
 \${SOURCE}
 <<SOURCE_END>>
@@ -82,12 +82,12 @@ SOURCE CODE TO REVIEW (language: \${LANGUAGE_PLACEHOLDER}):
 
 class GeminiAdapter {
   constructor({ apiKey, model, timeoutMs, maxRetries, maxOutputChars }) {
-    if (!apiKey) {
-      throw new Error('Gemini API key is required.');
-    }
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.modelName = model;
+    // Per-attempt timeout for each generateContent call.
     this.timeoutMs = timeoutMs;
+    // Total deadline for the entire analyze operation (all attempts combined).
+    this.totalDeadlineMs = timeoutMs * (maxRetries + 1);
     this.maxRetries = maxRetries;
     this.maxOutputChars = maxOutputChars;
     this.name = 'gemini';
@@ -96,9 +96,9 @@ class GeminiAdapter {
   async analyze({ source, language }) {
     const model = this.genAI.getGenerativeModel({ model: this.modelName });
     const systemPrompt = buildSystemPrompt(language).replace(
-      '\${LANGUAGE_PLACEHOLDER}',
-      language
-    ).replace(/\$\{SOURCE\}/g, source);
+      '${SOURCE}',
+      source
+    );
 
     const generationConfig = {
       temperature: 0.2,
@@ -106,10 +106,27 @@ class GeminiAdapter {
       responseMimeType: 'application/json',
     };
 
+    // Total operation deadline: the entire analyze() call (all retries
+    // combined) must not exceed this deadline.
+    const totalDeadline = Date.now() + this.totalDeadlineMs;
+
     let lastError = null;
     for (let attempt = 1; attempt <= this.maxRetries + 1; attempt++) {
+      // Enforce the total deadline before starting another attempt.
+      const now = Date.now();
+      if (now >= totalDeadline) {
+        throw this._mapProviderError(
+          new Error('Provider operation exceeded total deadline.'),
+          { status: 504, code: 'PROVIDER_TIMEOUT' }
+        );
+      }
+
+      // Per-attempt timeout, bounded by the remaining time in the total deadline.
+      const remainingMs = Math.max(1, totalDeadline - now);
+      const attemptTimeoutMs = Math.min(this.timeoutMs, remainingMs);
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+      const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
 
       try {
         const result = await model.generateContent(
@@ -122,7 +139,7 @@ class GeminiAdapter {
         const response = result.response;
         const text = response.text();
 
-        return this._parseAndValidate(text, language);
+        return this._parseAndValidate(text);
       } catch (err) {
         lastError = err;
         const isAbort = err.name === 'AbortError' || err.message === 'AbortError';
@@ -133,7 +150,7 @@ class GeminiAdapter {
           isAbort ||
           /timeout|unavailable|overloaded/i.test(err.message || '');
 
-        // Auth/config errors are not retryable.
+        // Auth/config errors and malformed requests are not retryable.
         if (err.status === 401 || err.status === 403 || err.status === 400) {
           logger.error('codesense-gemini.non-retryable', {
             attempt,
@@ -143,6 +160,7 @@ class GeminiAdapter {
           throw this._mapProviderError(err);
         }
 
+        // No backoff after the final attempt.
         if (!isTransient || attempt > this.maxRetries + 1) {
           logger.error('codesense-gemini.final-failure', {
             attempts: attempt,
@@ -156,8 +174,10 @@ class GeminiAdapter {
           maxAttempts: this.maxRetries + 1,
           message: err.message,
         });
-        // Brief backoff before retry.
-        await new Promise((r) => setTimeout(r, 500 * attempt));
+
+        // Brief backoff before retry (only if more attempts remain).
+        const backoffMs = Math.min(500 * attempt, Math.max(1, totalDeadline - Date.now()));
+        await new Promise((r) => setTimeout(r, backoffMs));
       } finally {
         // Always clear the timeout to prevent timer leaks and resource exhaustion.
         clearTimeout(timeoutId);
@@ -167,7 +187,7 @@ class GeminiAdapter {
     throw this._mapProviderError(lastError);
   }
 
-  _parseAndValidate(text, language) {
+  _parseAndValidate(text) {
     if (!text || text.trim() === '') {
       throw this._mapProviderError(
         new Error('Provider returned empty response.'),
@@ -178,7 +198,7 @@ class GeminiAdapter {
     let parsed;
     try {
       parsed = JSON.parse(text);
-    } catch (err) {
+    } catch {
       logger.warn('codesense-gemini.invalid-json', { length: text.length });
       throw this._mapProviderError(
         new Error('Provider returned invalid JSON.'),
