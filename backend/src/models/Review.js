@@ -86,6 +86,12 @@ const reviewSchema = new mongoose.Schema(
     promptVersion: { type: String, trim: true, default: null },
     schemaVersion: { type: String, trim: true, default: '1.0' },
     correlationId: { type: String, trim: true, default: null },
+    // Review focus mode: 'security' prioritizes security findings; null = general.
+    focus: {
+      type: String,
+      enum: ['security', null],
+      default: null,
+    },
     failureReason: { type: String, trim: true, default: null },
     completedAt: { type: Date, default: null },
   },

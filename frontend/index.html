@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/pages.css" />
+  <link rel="stylesheet" href="css/workbench.css" />
   <style>
     .monaco-finding-highlight { background: rgba(124, 92, 255, 0.25); border-radius: 2px; }
     .monaco-finding-inline { border-bottom: 2px solid var(--accent); }
@@ -56,7 +57,7 @@
         </div>
         <nav style="padding:var(--space-3);" aria-label="Workspace navigation">
           <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;margin-bottom:var(--space-1);" data-route="dashboard">Dashboard</a>
-          <a href="#" class="btn btn-primary btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;margin-bottom:var(--space-1);" data-route="editor">New Review</a>
+          <a href="#" class="btn btn-primary btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;margin-bottom:var(--space-1);" data-route="workbench">Open Workbench</a>
           <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;margin-bottom:var(--space-1);" data-route="history">Review History</a>
           <a href="#" class="btn btn-outline btn-sm btn-full" style="text-align:left;padding:var(--space-2)var(--space-3);font-size:0.875rem;" data-route="settings">Settings</a>
         </nav>
@@ -67,7 +68,7 @@
         <div data-view="landing" class="view" id="view-landing">
           <div class="landing">
             <h1 class="landing-title">CodeSense AI</h1>
-            <p class="landing-subtitle">AI-assisted code review for learners and developers. Write or paste source, select a language, and receive structured findings with explanations and recommendations.</p>
+            <p class="landing-subtitle">AI-assisted code review for learners and developers. Open the VS Code-inspired workbench, edit multi-file workspaces, and receive structured findings with explanations and recommendations.</p>
             <div class="landing-actions">
               <a href="#" class="btn btn-primary" data-route="register">Create account</a>
               <a href="#" class="btn btn-outline" data-route="login">Sign in</a>
@@ -176,42 +177,6 @@
             <button class="btn btn-primary mt-3" id="btn-empty-new-review">New Review</button>
           </div>
           <div id="dashboard-reviews" class="mt-3" hidden></div>
-        </div>
-
-        <!-- Editor -->
-        <div data-view="editor" class="view editor-page" id="view-editor">
-          <div class="editor-toolbar">
-            <div style="display:flex;align-items:center;gap:var(--space-2);flex:1;min-width:0;">
-              <label class="label visually-hidden">Language</label>
-              <select class="lang-select" id="editor-language">
-                <option>Loading languages&hellip;</option>
-              </select>
-            </div>
-            <div class="source-size-indicator" id="editor-source-size">0 bytes</div>
-          </div>
-          <div class="editor-main">
-            <div class="editor-left">
-              <div class="editor-surface">
-                <div id="editor-loading" class="editor-loading"><div class="spinner"></div><div class="mt-2">Initializing editor&hellip;</div></div>
-                <div id="editor-error" class="editor-error"></div>
-                <div id="monaco-container"></div>
-                <div id="editor-unavailable" class="editor-error" hidden style="padding:var(--space-5);">
-                  <p>The code editor could not be loaded.</p>
-                </div>
-              </div>
-              <div class="status-bar">
-                <span id="editor-status" class="status-pill status-idle">Ready</span>
-                <span style="font-size:0.75rem;">Desktop Chrome &amp; Firefox</span>
-              </div>
-            </div>
-            <div class="editor-right">
-              <div class="card section">
-                <div class="section-title">Submit</div>
-                <button class="btn btn-primary btn-full mt-3" id="editor-analyze">Analyze code</button>
-                <p class="field-hint mt-3">Source is sent to the AI provider for review. You are bound to the submitted source revision.</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Review report -->
@@ -348,6 +313,122 @@
             <button class="btn btn-danger" id="settings-logout">Sign out</button>
           </div>
           <div id="settings-error" class="field-error mt-3" hidden></div>
+        </div>
+
+        <!-- Workbench (VS Code-inspired AI developer workbench) -->
+        <div data-view="workbench" class="view" id="view-workbench" hidden>
+          <div class="wb" id="wb-root" role="application" aria-label="CodeSense AI Workbench">
+            <!-- Titlebar -->
+            <div class="wb-titlebar">
+              <div class="wb-brand">
+                <span class="brand-mark" aria-hidden="true">CS</span>
+                <span>CodeSense AI</span>
+                <span class="text-muted" style="font-weight:400;font-size:11px;">Workbench</span>
+              </div>
+              <div class="wb-title-actions">
+                <button class="wb-btn" id="wb-back-dashboard" title="Back to dashboard">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span class="btn-label">Dashboard</span>
+                </button>
+                <span id="wb-account-slot" class="wb-account-slot"></span>
+                <button class="wb-btn" id="wb-theme-toggle" title="Toggle light/dark theme" aria-label="Toggle theme">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 5 5 0 0 1 0-13z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Body -->
+            <div class="wb-body">
+              <!-- Activity bar -->
+              <nav class="wb-activitybar" id="wb-activitybar" role="navigation" aria-label="Workbench views"></nav>
+
+              <!-- Sidebar -->
+              <aside class="wb-sidebar" id="wb-sidebar" aria-label="Workbench sidebar">
+                <div class="wb-panel-header"><span id="wb-panel-title">Explorer</span>
+                  <span class="wb-panel-actions" id="wb-panel-actions"></span>
+                </div>
+                <div class="wb-panel-body" id="wb-panel-body" role="region" aria-live="polite"></div>
+              </aside>
+
+              <!-- Main -->
+              <div class="wb-main">
+                <!-- Editor tabs -->
+                <div class="wb-tabs" id="wb-tabs" role="tablist" aria-label="Open editors"></div>
+
+                <!-- Editor area -->
+                <div class="wb-editor-area" id="wb-editor-area">
+                  <div class="wb-editor-host" id="wb-editor-host"></div>
+                  <div class="wb-welcome" id="wb-welcome" hidden>
+                    <h3>CodeSense AI Workbench</h3>
+                    <div>A VS Code-inspired AI-powered browser-based developer workbench.</div>
+                    <div class="kbd-combos">
+                      <span><span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">P</span> Command palette</span>
+                      <span><span class="kbd">Ctrl</span>+<span class="kbd">P</span> Quick open file</span>
+                      <span><span class="kbd">Ctrl</span>+<span class="kbd">B</span> Toggle sidebar</span>
+                      <span><span class="kbd">Ctrl</span>+<span class="kbd">`</span> Toggle panel</span>
+                    </div>
+                    <button class="wb-btn primary" id="wb-welcome-new-file">Create a new file</button>
+                  </div>
+                  <!-- Diff viewer overlay -->
+                  <div class="wb-diff-host" id="wb-diff-host" hidden>
+                    <div class="wb-diff-toolbar">
+                      <span class="wb-diff-title" id="wb-diff-title">Diff</span>
+                      <span class="wb-diff-note" id="wb-diff-note"></span>
+                      <span style="flex:1;"></span>
+                      <button class="wb-btn primary" id="wb-diff-accept" hidden>Accept change</button>
+                      <button class="wb-btn danger" id="wb-diff-reject" hidden>Reject</button>
+                      <button class="wb-btn" id="wb-diff-close">Close diff</button>
+                    </div>
+                    <div class="wb-diff-editor-wrap" id="wb-diff-editor-wrap"></div>
+                  </div>
+                </div>
+
+                <!-- Bottom panel -->
+                <div class="wb-bottom hidden" id="wb-bottom">
+                  <div class="wb-bottom-resizer" id="wb-bottom-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize panel" tabindex="0"></div>
+                  <div class="wb-bottom-tabs" role="tablist" aria-label="Panel views">
+                    <button class="wb-bottom-tab" id="wb-bottom-tab-problems" role="tab" aria-selected="false" aria-controls="wb-pane-problems">Problems</button>
+                    <button class="wb-bottom-tab" id="wb-bottom-tab-output" role="tab" aria-selected="false" aria-controls="wb-pane-output">Output</button>
+                    <button class="wb-bottom-tab" id="wb-bottom-tab-terminal" role="tab" aria-selected="false" aria-controls="wb-pane-terminal">Terminal</button>
+                    <span style="flex:1"></span>
+                    <button class="wb-icon-btn" id="wb-bottom-close" title="Close panel (Ctrl+\`)" aria-label="Close panel">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </button>
+                  </div>
+                  <div class="wb-bottom-body">
+                    <div class="wb-bottom-pane" id="wb-pane-problems" role="tabpanel" aria-labelledby="wb-bottom-tab-problems"></div>
+                    <div class="wb-bottom-pane" id="wb-pane-output" role="tabpanel" aria-labelledby="wb-bottom-tab-output"></div>
+                    <div class="wb-bottom-pane" id="wb-pane-terminal" role="tabpanel" aria-labelledby="wb-bottom-tab-terminal"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status bar -->
+            <footer class="wb-statusbar" id="wb-statusbar" role="contentinfo" aria-label="Workbench status"></footer>
+          </div>
+
+          <!-- Command palette / quick open overlay -->
+          <div class="wb-palette-overlay" id="wb-palette-overlay" hidden>
+            <div class="wb-palette" role="dialog" aria-modal="true" aria-label="Command palette">
+              <input class="wb-palette-input" id="wb-palette-input" type="text"
+                     placeholder="Type a command…" aria-label="Search commands" autocomplete="off" spellcheck="false" />
+              <div class="wb-palette-list" id="wb-palette-list" role="listbox" aria-label="Matching commands"></div>
+            </div>
+          </div>
+
+          <!-- Workbench dialog (prompts / confirmations) -->
+          <div class="wb-dialog-overlay" id="wb-dialog-overlay" hidden>
+            <div class="wb-dialog" role="dialog" aria-modal="true" aria-labelledby="wb-dialog-title">
+              <h3 id="wb-dialog-title"></h3>
+              <p id="wb-dialog-message"></p>
+              <input class="wb-input wb-dialog-input" id="wb-dialog-input" hidden aria-label="Input value" />
+              <div class="wb-dialog-actions">
+                <button class="wb-btn" id="wb-dialog-cancel">Cancel</button>
+                <button class="wb-btn primary" id="wb-dialog-ok">OK</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 404 -->

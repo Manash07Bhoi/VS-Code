@@ -108,7 +108,7 @@ function init() {
   if (!btnNewReview) return;
   btnNewReview.addEventListener('click', (e) => {
     e.preventDefault();
-    navigate('/editor');
+    navigate('/workbench');
   });
   if (retryBtn) {
     retryBtn.addEventListener('click', () => load());

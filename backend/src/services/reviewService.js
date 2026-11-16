@@ -34,7 +34,7 @@ function providerAdapter() {
   });
 }
 
-async function submitReview({ userId, source, language, title, clientRequestId }) {
+async function submitReview({ userId, source, language, title, clientRequestId, focus }) {
   // 1. Authenticate (userId present).
   if (!userId) {
     throw { status: 401, code: 'UNAUTHENTICATED', message: 'Authentication required.' };
@@ -82,6 +82,7 @@ async function submitReview({ userId, source, language, title, clientRequestId }
     sourceSize: sourceBytes,
     status: 'accepted',
     correlationId,
+    focus: focus === 'security' ? 'security' : null,
   });
 
   // 5. Call provider from backend only.
@@ -105,7 +106,7 @@ async function submitReview({ userId, source, language, title, clientRequestId }
 
   let result;
   try {
-    result = await adapter.analyze({ source, language });
+    result = await adapter.analyze({ source, language, focus });
   } catch (err) {
     // Provider failure: persist honest failure, never fabricate.
     const mapped = err.code ? err : { code: 'PROVIDER_UNAVAILABLE', message: err.message, status: 502 };

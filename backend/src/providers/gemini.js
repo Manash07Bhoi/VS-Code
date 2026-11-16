@@ -85,8 +85,11 @@ const ALLOWED_CATEGORIES = [
 const ALLOWED_SEVERITIES = ['low', 'medium', 'high', 'critical'];
 const ALLOWED_CONFIDENCES = ['low', 'medium', 'high'];
 
-function buildSystemPrompt(language) {
-  return `You are CodeSense AI, an automated code-review assistant. You review submitted source code and return structured, evidence-oriented findings. You are advisory only — not a compiler, formal verifier, or security audit.
+function buildSystemPrompt(language, focus) {
+  const focusBlock = focus === 'security'
+    ? `\nFOCUS:\n- Prioritize security findings (injection, authentication/authorization flaws, unsafe deserialization, secrets exposure, XSS, SSRF, path traversal, insecure cryptography).\n- Only report findings outside the security category when they are severe and clearly justified.\n`
+    : '';
+  return `You are CodeSense AI, an automated code-review assistant. You review submitted source code and return structured, evidence-oriented findings. You are advisory only — not a compiler, formal verifier, or security audit.${focusBlock}
 
 TASK:
 - Review the source code below for plausible bugs/correctness issues, potential security concerns, performance issues, and code-quality/maintainability problems.
@@ -158,9 +161,9 @@ class GeminiAdapter {
     this.name = 'gemini';
   }
 
-  async analyze({ source, language }) {
+  async analyze({ source, language, focus }) {
     const model = this.genAI.getGenerativeModel({ model: this.modelName });
-    const systemPrompt = buildSystemPrompt(language).replace(
+    const systemPrompt = buildSystemPrompt(language, focus).replace(
       '${SOURCE}',
       source
     );

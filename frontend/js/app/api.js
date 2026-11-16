@@ -106,6 +106,9 @@ const api = {
   getReview: (id) => request(`/reviews/${id}`),
   deleteReview: (id) => request(`/reviews/${id}`, { method: 'DELETE' }),
 
+  // Assist (ephemeral explain/improve for the workbench; not persisted)
+  assist: (payload) => request('/assist', { method: 'POST', body: JSON.stringify(payload) }),
+
   health: () => request('/health/ready'),
 };
 

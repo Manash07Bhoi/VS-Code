@@ -10,6 +10,7 @@ import { set } from '../app/state.js';
 import { navigate } from '../app/router.js';
 import { show as toastShow, error as toastError } from '../components/toast.js';
 import { open as modalOpen } from '../components/modal.js';
+import { openScratch } from '../workbench/workbench.js';
 
 const container = document.getElementById('review-container');
 const notFoundEl = document.getElementById('review-not-found');
@@ -22,6 +23,14 @@ const btnBack = document.getElementById('review-back');
 const btnCopySource = document.getElementById('review-copy-source');
 
 let reviewData = null;
+
+const EXT_FOR_LANGUAGE = {
+  javascript: '.js',
+  typescript: '.ts',
+  python: '.py',
+  java: '.java',
+  cpp: '.cpp',
+};
 
 function escapeHtml(text) {
   if (text == null) return '';
@@ -250,11 +259,14 @@ function init() {
     }
     if (btn.classList.contains('jump-to')) {
       const line = Number(btn.getAttribute('data-line'));
-      if (line) {
-        // Carry the reviewed source, language, and target line into the editor
-        // so the user can jump directly to the reviewed source location.
-        set({ source: reviewData.source || '', language: reviewData.language, jumpToLine: line });
-        navigate('/editor');
+      if (line && reviewData) {
+        // Open the reviewed source as a scratch file in the workbench and
+        // jump to the finding's line.
+        const lang = reviewData.language || 'plaintext';
+        const ext = EXT_FOR_LANGUAGE[lang] || '.txt';
+        const reviewId = typeof reviewData._id === 'string' ? reviewData._id.slice(-6) : 'src';
+        openScratch(`review-${reviewId}${ext}`, reviewData.source || '', lang, line);
+        navigate('/workbench');
       }
     }
   });

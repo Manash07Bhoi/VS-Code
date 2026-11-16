@@ -63,6 +63,12 @@ const createReviewSchema = z.object({
   language: languageIdSchema,
   title: optionalTitleSchema,
   clientRequestId: clientRequestIdSchema,
+  // Optional review focus mode: 'security' prioritizes security findings.
+  focus: z
+    .enum(['security'], { error: 'Focus must be security when provided.' })
+    .optional()
+    .nullable()
+    .default(null),
 });
 
 // --- Review list query ---

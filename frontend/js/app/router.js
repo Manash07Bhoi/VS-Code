@@ -13,14 +13,15 @@ const ROUTES = {
   '/register': 'register',
   '/login': 'login',
   '/dashboard': 'dashboard',
-  '/editor': 'editor',
+  '/workbench': 'workbench',
+  '/editor': 'workbench', // legacy route now opens the workbench
   '/review': 'review',
   '/history': 'history',
   '/settings': 'settings',
   '/404': '404',
 };
 
-const PROTECTED = new Set(['/dashboard', '/editor', '/review', '/history', '/settings']);
+const PROTECTED = new Set(['/dashboard', '/workbench', '/editor', '/review', '/history', '/settings']);
 
 const views = {};
 let currentRoute = null;

@@ -27,7 +27,7 @@ router.post(
   csrfMiddleware,
   validate(createReviewSchema, 'body'),
   async (req, res, next) => {
-    const { source, language, title, clientRequestId } = req.validated;
+    const { source, language, title, clientRequestId, focus } = req.validated;
     try {
       const result = await submitReview({
         userId: req.auth.userId,
@@ -35,6 +35,7 @@ router.post(
         language,
         title,
         clientRequestId,
+        focus,
       });
       const statusCode = result.statusCode || (result.status === 'failed' ? 502 : 201);
       return res.status(statusCode).json(result);

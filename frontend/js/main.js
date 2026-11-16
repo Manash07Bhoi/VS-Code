@@ -12,7 +12,7 @@ import { initRouter, registerView, setOnRouteChange } from './app/router.js';
 import { init as registerInit } from './pages/register.js';
 import { init as loginInit } from './pages/login.js';
 import { load as dashboardLoad, init as dashboardInit } from './pages/dashboard.js';
-import { init as editorInit } from './pages/editor.js';
+import { init as workbenchInit } from './workbench/workbench.js';
 import { init as reviewInit, load as reviewLoad } from './pages/review.js';
 import { init as historyInit, load as historyLoad } from './pages/history.js';
 import { init as settingsInit } from './pages/settings.js';
@@ -50,7 +50,7 @@ async function bootstrap() {
       case 'register': registerInit(); break;
       case 'login': loginInit(); break;
       case 'dashboard': dashboardInit(); dashboardLoad(); break;
-      case 'editor': editorInit(); break;
+      case 'workbench': workbenchInit(); break;
       case 'review': reviewInit(); reviewLoad(); break;
       case 'history': historyInit(); historyLoad(); break;
       case 'settings': settingsInit(); break;
