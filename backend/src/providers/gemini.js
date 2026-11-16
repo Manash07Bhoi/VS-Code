@@ -86,9 +86,9 @@ const ALLOWED_SEVERITIES = ['low', 'medium', 'high', 'critical'];
 const ALLOWED_CONFIDENCES = ['low', 'medium', 'high'];
 
 function buildSystemPrompt(language, focus) {
-  const focusBlock = focus === 'security'
-    ? `\nFOCUS:\n- Prioritize security findings (injection, authentication/authorization flaws, unsafe deserialization, secrets exposure, XSS, SSRF, path traversal, insecure cryptography).\n- Only report findings outside the security category when they are severe and clearly justified.\n`
-    : '';
+  const focusBlock = focus === 'security' ?
+    '\nFOCUS:\n- Prioritize security findings (injection, authentication/authorization flaws, unsafe deserialization, secrets exposure, XSS, SSRF, path traversal, insecure cryptography).\n- Only report findings outside the security category when they are severe and clearly justified.\n' :
+    '';
   return `You are CodeSense AI, an automated code-review assistant. You review submitted source code and return structured, evidence-oriented findings. You are advisory only — not a compiler, formal verifier, or security audit.${focusBlock}
 
 TASK:
@@ -192,7 +192,6 @@ class GeminiAdapter {
 
   // Shared generation loop with retry/timeout handling for all actions.
   async _generate(model, prompt, parse) {
-
     const generationConfig = {
       temperature: 0.2,
       maxOutputTokens: Math.ceil(this.maxOutputChars / 4),
@@ -381,9 +380,9 @@ class GeminiAdapter {
           { status: 502, code: 'INVALID_PROVIDER_RESPONSE' }
         );
       }
-      const keyPoints = Array.isArray(parsed.keyPoints)
-        ? parsed.keyPoints.map((p) => sanitize(p, 500)).filter(Boolean)
-        : [];
+      const keyPoints = Array.isArray(parsed.keyPoints) ?
+        parsed.keyPoints.map((p) => sanitize(p, 500)).filter(Boolean) :
+        [];
       return {
         explanation: sanitize(parsed.explanation, 8000),
         keyPoints,
@@ -398,14 +397,14 @@ class GeminiAdapter {
         { status: 502, code: 'INVALID_PROVIDER_RESPONSE' }
       );
     }
-    const changes = Array.isArray(parsed.changes)
-      ? parsed.changes
-          .filter((c) => c && typeof c === 'object')
-          .map((c) => ({
-            title: sanitize(c.title, 200) || 'Change',
-            explanation: sanitize(c.explanation, 1000),
-          }))
-      : [];
+    const changes = Array.isArray(parsed.changes) ?
+      parsed.changes
+        .filter((c) => c && typeof c === 'object')
+        .map((c) => ({
+          title: sanitize(c.title, 200) || 'Change',
+          explanation: sanitize(c.explanation, 1000),
+        })) :
+      [];
     return {
       improvedCode: String(parsed.improvedCode).slice(0, 128 * 1024),
       changes,
