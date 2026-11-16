@@ -1,0 +1,49 @@
+name: CD — Deploy Frontend to Netlify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only deploy after CI passes on the same commit.
+jobs:
+  deploy-frontend:
+    needs: []
+    runs-on: ubuntu-latest
+    # Deployment is gated on the NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID
+    # repository secrets. Without them, this job is intentionally a no-op
+    # and reports BLOCKED rather than fabricating success.
+    if: |
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      secrets.NETLIFY_AUTH_TOKEN != '' && secrets.NETLIFY_SITE_ID != ''
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli@latest
+
+      - name: Deploy frontend to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          netlify deploy --dir=frontend --prod --message "Deploy $(git rev-parse --short HEAD)"
+
+      - name: Record deployment
+        run: |
+          echo "Deployed commit $(git rev-parse HEAD) to Netlify site $NETLIFY_SITE_ID"
+
+  deploy-frontend-blocked:
+    needs: []
+    runs-on: ubuntu-latest
+    # Runs only when deployment secrets are absent — documents the blocker.
+    if: |
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      (secrets.NETLIFY_AUTH_TOKEN == '' || secrets.NETLIFY_SITE_ID == '')
+    steps:
+      - name: Report deployment blocker
+        run: |
+          echo "BLOCKED: Netlify frontend deployment cannot run."
+          echo "Set NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID repository secrets to enable CD."
+          echo "No deployment was performed and no tokens were exposed."

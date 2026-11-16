@@ -78,6 +78,7 @@ async function test() {
 
   await stop(mongod);
   console.log('auth tests: PASS');
+  process.exit(0);
 }
 
 test().catch((err) => {

@@ -28,7 +28,10 @@ async function main() {
   const browser = await puppeteer.launch({
     executablePath: '/usr/bin/chromium',
     headless: 'new',
-    args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+    args: [
+      '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
+      '--disable-setuid-sandbox', '--single-process', '--no-zygote',
+    ],
   });
   const page = await browser.newPage();
   const errors = [];

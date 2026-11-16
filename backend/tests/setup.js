@@ -16,7 +16,10 @@ async function start() {
   process.env.NODE_ENV = 'test';
   process.env.SESSION_SECRET = 'test-secret-do-not-use-in-production';
   process.env.CSRF_SECRET = 'test-csrf-secret';
-  process.env.GEMINI_API_KEY = 'test-key';
+  // Intentionaly unset: no provider key in automated tests. This forces
+  // providerAdapter() to return null so reviews take the honest
+  // provider-unavailable path without any network call to Gemini.
+  process.env.GEMINI_API_KEY = '';
   process.env.GEMINI_MODEL = 'gemini-1.5-flash-latest';
   process.env.FRONTEND_ORIGIN = 'http://localhost:3000';
   process.env.SECURE_COOKIES = 'false';

@@ -51,12 +51,32 @@ function handleResponse(res) {
   return res.json();
 }
 
-async function request(path, opts = {}) {
+async function request(path, opts = {}, csrfRetry = true) {
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
     ...opts,
     headers: { ...headers(), ...(opts.headers || {}) },
   });
+
+  // Centralized CSRF refresh: if a mutating request is rejected with a stale
+  // CSRF token (for example after session regeneration on login/register),
+  // refetch a fresh token bound to the current session and retry exactly once.
+  // This keeps subsequent authenticated writes working without duplicating
+  // fragile token logic across pages.
+  if (
+    csrfRetry &&
+    res.status === 403 &&
+    opts.method &&
+    !['GET', 'HEAD', 'OPTIONS'].includes(opts.method)
+  ) {
+    try {
+      await fetchCsrfToken();
+    } catch (_err) {
+      // Non-fatal; fall through to handleResponse which will surface the error.
+    }
+    return request(path, opts, false);
+  }
+
   return handleResponse(res);
 }
 

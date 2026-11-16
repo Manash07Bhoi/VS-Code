@@ -29,6 +29,7 @@ async function test() {
 
   await stop(mongod);
   console.log('language tests: PASS');
+  process.exit(0);
 }
 
 test().catch((err) => {

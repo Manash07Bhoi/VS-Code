@@ -251,7 +251,10 @@ function init() {
     if (btn.classList.contains('jump-to')) {
       const line = Number(btn.getAttribute('data-line'));
       if (line) {
-        toastShow('Jump to location requires opening the editor with the reviewed source.', 'info', 4000);
+        // Carry the reviewed source, language, and target line into the editor
+        // so the user can jump directly to the reviewed source location.
+        set({ source: reviewData.source || '', language: reviewData.language, jumpToLine: line });
+        navigate('/editor');
       }
     }
   });

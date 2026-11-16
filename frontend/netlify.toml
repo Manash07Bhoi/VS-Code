@@ -1,0 +1,32 @@
+[build]
+  publish = "."
+  command = "echo 'No build step required — static frontend.'"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA fallback: every client route serves index.html so hash-routing and
+# direct URL navigation work after a refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Path = ["/*"]}
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+    X-Content-Type-Options = "nosniff"

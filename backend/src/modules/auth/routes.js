@@ -81,10 +81,13 @@ router.post('/register', authLimiter, validate(registerSchema, 'body'), async (r
             error: { code: 'INTERNAL_ERROR', message: 'Session save failed.', requestId: req.requestId },
           });
         }
+        // Bind a fresh CSRF token to the regenerated session.
+        req.session.csrfToken = crypto.randomBytes(32).toString('hex');
         logger.info('codesense-auth.registered', { userId: user._id.toString(), email });
         return res.status(201).json({
           message: 'Account created.',
           created: true,
+          csrfToken: req.session.csrfToken,
           user: { id: user._id.toString(), email: user.email },
         });
       });
@@ -130,9 +133,12 @@ router.post('/login', authLimiter, validate(loginSchema, 'body'), async (req, re
           });
         }
         await updateLastAuthenticated(user._id);
+        // Bind a fresh CSRF token to the regenerated session.
+        req.session.csrfToken = crypto.randomBytes(32).toString('hex');
         logger.info('codesense-auth.login', { userId: user._id.toString(), email });
         return res.json({
           message: 'Signed in.',
+          csrfToken: req.session.csrfToken,
           user: { id: user._id.toString(), email: user.email },
         });
       });

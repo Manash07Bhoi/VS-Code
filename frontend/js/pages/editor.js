@@ -7,7 +7,7 @@
 
 import { api } from '../app/api.js';
 import { state, set, get } from '../app/state.js';
-import { loadMonaco, isLoaded, init as monacoInit, getValue, setValue, setLanguage, getLanguage, focus, highlightRange, clearDecorations, onChange as monacoOnChange } from '../app/monaco.js';
+import { loadMonaco, isLoaded, init as monacoInit, getValue, setValue, setLanguage, getLanguage, focus, setSelectionRange, highlightRange, clearDecorations, onChange as monacoOnChange } from '../app/monaco.js';
 import { navigate } from '../app/router.js';
 import { show as toastShow, error as toastError } from '../components/toast.js';
 
@@ -87,6 +87,17 @@ function init() {
       renderLoading(editorLoadingEl, false);
       updateSourceSize();
       focus();
+      // Jump to a source line carried from a review report (review page).
+      const jumpToLine = Number(state.jumpToLine || 0);
+      if (jumpToLine >= 1) {
+        set({ jumpToLine: 0 }); // consume once
+        const totalLines = editorInstance.getModel().getLineCount();
+        const targetLine = Math.min(Math.max(jumpToLine, 1), totalLines);
+        const range = { startLine: targetLine, startCol: 1, endLine: targetLine, endCol: 1 };
+        setSelectionRange(range);
+        highlightRange(range);
+        setStatus(`Jumped to line ${targetLine}`, 'info');
+      }
     })
     .catch((err) => {
       renderLoading(editorLoadingEl, false);

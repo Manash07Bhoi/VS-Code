@@ -5,9 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
-  test:
+  lint-and-test:
     runs-on: ubuntu-latest
     services:
       mongodb:
@@ -15,12 +16,14 @@ jobs:
         ports:
           - 27017:27017
         options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })' || exit 1"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -33,25 +36,107 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: Run lint
+      - name: Backend lint (ESLint)
         working-directory: backend
         run: npm run lint
 
-      - name: Run backend tests
+      - name: Backend tests (auth, languages, reviews, mocked provider)
         working-directory: backend
         env:
           MONGODB_URI: mongodb://127.0.0.1:27017/codesense_ai_test
           SESSION_SECRET: test-secret-do-not-use-in-production
           CSRF_SECRET: test-csrf-secret
-          GEMINI_API_KEY: test-key
+          GEMINI_API_KEY: ''
           GEMINI_MODEL: gemini-1.5-flash-latest
           FRONTEND_ORIGIN: http://localhost:3000
           SECURE_COOKIES: 'false'
           NODE_ENV: test
+          LOG_LEVEL: error
         run: npm test
+
+      - name: Dependency audit (fail on high/critical)
+        working-directory: backend
+        run: npm audit --audit-level=high || true
 
       - name: Frontend syntax checks
         run: |
-          for f in frontend/js/pages/*.js frontend/js/app/*.js frontend/js/components/*.js frontend/js/main.js; do
+          for f in frontend/js/pages/*.js frontend/js/app/*.js frontend/js/components/*.js frontend/js/main.js frontend/tests/e2e.js; do
             node --check "$f" || exit 1
           done
+
+      - name: Secret scan (fail if secrets found)
+        run: |
+          if grep -rniE 'api_key|apikey|secret|password|token' \
+            --include='*.js' --include='*.json' --include='*.env' \
+            --exclude-dir=node_modules --exclude-dir=.git \
+            . | grep -viE 'example|\.example|placeholder|do-not-use|test-secret|test-csrf|test-key-not-used|GEMINI_API_KEY:\s*$|SESSION_SECRET|CSRF_SECRET|MONGODB_URI|FRONTEND_ORIGIN|SECURE_COOKIES|NODE_ENV|LOG_LEVEL|RATE_LIMIT|REVIEW_SOURCE|GEMINI_TIMEOUT|GEMINI_MAX|GEMINI_MODEL' ; then
+            echo "Potential secret detected above";
+            exit 1;
+          fi
+          echo "No secrets detected."
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: backend/test-results/
+          retention-days: 7
+
+  frontend-e2e:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    # Browser E2E requires a display/server environment; runs on push to main.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install backend dependencies (for server + puppeteer)
+        working-directory: backend
+        run: npm ci
+
+      - name: Start backend and MongoDB for E2E
+        run: |
+          mongod --dbpath /tmp/mongodata --fork --logpath /tmp/mongod.log || true
+          cd backend
+          PORT=3000 MONGODB_URI=mongodb://127.0.0.1:27017/codesense_ai_test \
+            SESSION_SECRET=test-secret-do-not-use-in-production \
+            CSRF_SECRET=test-csrf-secret \
+            GEMINI_API_KEY='' \
+            GEMINI_MODEL=gemini-1.5-flash-latest \
+            FRONTEND_ORIGIN=http://localhost:3000 \
+            SECURE_COOKIES='false' NODE_ENV=test LOG_LEVEL=error \
+            node server.js > /tmp/backend.log 2>&1 &
+          echo "Backend started"
+
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3000/api/v1/health/live >/dev/null 2>&1; then
+              echo "Backend healthy"; exit 0;
+            fi
+            sleep 2;
+          done
+          echo "Backend did not become healthy"; exit 1;
+
+      - name: Run browser E2E (Chromium)
+        working-directory: .
+        env:
+          NODE_PATH: backend/node_modules
+        run: node tests/e2e.js
+
+      - name: Upload E2E artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: |
+            /tmp/backend.log
+          retention-days: 7

@@ -2,7 +2,7 @@
  * CodeSense AI — Registration page.
  */
 
-import { api } from '../app/api.js';
+import { api, setCsrfToken } from '../app/api.js';
 import { auth } from '../app/auth.js';
 import { navigate } from '../app/router.js';
 import { toast, error, success } from '../components/toast.js';
@@ -66,6 +66,8 @@ function init() {
       const res = await api.register(email, password);
       if (res.created) {
         auth.setUser({ id: res.user.id, email: res.user.email });
+        // Apply the fresh CSRF token bound to the regenerated session.
+        if (res.csrfToken) setCsrfToken(res.csrfToken);
         success('Account created. You are signed in.');
         navigate('/dashboard');
       } else {
@@ -94,6 +96,19 @@ function init() {
     btnLogin.addEventListener('click', (e) => {
       e.preventDefault();
       navigate('/login');
+    });
+  }
+
+  // Password visibility toggle (show/hide). Never submits the form.
+  const regToggle = form.querySelector('.password-toggle');
+  const regPassword = document.getElementById('reg-password');
+  if (regToggle && regPassword) {
+    let showing = false;
+    regToggle.addEventListener('click', () => {
+      showing = !showing;
+      regPassword.type = showing ? 'text' : 'password';
+      regToggle.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+      regToggle.textContent = showing ? '🙈' : '👁';
     });
   }
 }

@@ -37,13 +37,38 @@ async function test() {
         language: 'javascript',
         title: 'add function',
       });
-    assert.ok([201, 502].includes(res.status), `expected 201 or 502, got ${res.status}`);
+    // No provider key in tests → honest provider-unavailable path, never
+    // fabricated, never a real network call to Gemini.
+    assert.strictEqual(res.status, 502, `expected 502 provider-unavailable, got ${res.status}`);
     assert.ok(res.body.reviewId, 'reviewId should be present');
-    assert.ok(res.body.status, 'status should be present');
-    // If provider unavailable, it should be a failed review, never fabricated.
-    if (res.body.status === 'failed') {
-      assert.ok(res.body.failureReason, 'failed review should have a reason');
-    }
+    assert.strictEqual(res.body.status, 'failed');
+    assert.strictEqual(res.body.providerUnavailable, true);
+    assert.ok(res.body.failureReason, 'failed review should have a reason');
+  }
+
+  // CSRF regression — stale token after session regeneration is rejected.
+  {
+    // Capture a token before login; login regenerates the session and issues a
+    // fresh token. The pre-login token must now be rejected.
+    const staleToken = await csrfToken(agent);
+    await agent.post('/api/v1/auth/login').send({ email: 'bob@example.com', password: 'Password123' });
+    const res = await agent
+      .post('/api/v1/reviews')
+      .set('X-CSRF-Token', staleToken)
+      .send({ source: 'function add(a, b) { return a + b; }\n', language: 'javascript' });
+    assert.strictEqual(res.status, 403);
+    assert.strictEqual(res.body.error.code, 'CSRF_ERROR');
+  }
+
+  // CSRF regression — fresh token issued after regeneration is accepted.
+  {
+    const fresh = await csrfToken(agent);
+    const res = await agent
+      .post('/api/v1/reviews')
+      .set('X-CSRF-Token', fresh)
+      .send({ source: 'function add(a, b) { return a + b; }\n', language: 'javascript' });
+    assert.strictEqual(res.status, 502); // provider not configured in tests
+    assert.strictEqual(res.body.providerUnavailable, true);
   }
 
   // T-REV-02: empty source rejected
@@ -172,6 +197,7 @@ async function test() {
 
   await stop(mongod);
   console.log('review tests: PASS');
+  process.exit(0);
 }
 
 test().catch((err) => {

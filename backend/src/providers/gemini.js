@@ -81,8 +81,10 @@ SOURCE CODE TO REVIEW (language: ${language}):
 }
 
 class GeminiAdapter {
-  constructor({ apiKey, model, timeoutMs, maxRetries, maxOutputChars }) {
-    this.genAI = new GoogleGenerativeAI(apiKey);
+  constructor({ apiKey, model, timeoutMs, maxRetries, maxOutputChars, genAI }) {
+    // `genAI` is injectable for deterministic unit testing; production
+    // passes no value and a real GoogleGenerativeAI is constructed.
+    this.genAI = genAI || new GoogleGenerativeAI(apiKey);
     this.modelName = model;
     // Per-attempt timeout for each generateContent call.
     this.timeoutMs = timeoutMs;
@@ -160,13 +162,23 @@ class GeminiAdapter {
           throw this._mapProviderError(err);
         }
 
-        // No backoff after the final attempt.
-        if (!isTransient || attempt > this.maxRetries + 1) {
+        // Final attempt: no retry, no backoff. Surface the last error.
+        if (attempt === this.maxRetries + 1) {
           logger.error('codesense-gemini.final-failure', {
             attempts: attempt,
             message: err.message,
           });
-          throw this._mapProviderError(err);
+          // Preserve an already-mapped provider error (e.g. invalid response).
+          throw err.code ? err : this._mapProviderError(err);
+        }
+
+        // Non-transient failures are not retryable.
+        if (!isTransient) {
+          logger.error('codesense-gemini.final-failure', {
+            attempts: attempt,
+            message: err.message,
+          });
+          throw err.code ? err : this._mapProviderError(err);
         }
 
         logger.warn('codesense-gemini.retry', {
