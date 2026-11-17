@@ -1,5 +1,51 @@
 # Release Notes — CodeSense AI Workbench Release
 
+## v1.1.0 — live AI, hardened delivery (2026-11-17)
+
+First release where the deployed product actually does what the UI promises end-to-end.
+
+### AI is live and verified against the running service
+
+- `GEMINI_MODEL=gemini-3.1-flash-lite`, validated by real API calls (the old examples named
+  models that now 404 for new keys).
+- **Provider payload defect fixed** (#11): the adapter sent a bare `Content[]` array with
+  `generationConfig` in the request-options slot, so *every* live request failed with
+  `400 Unknown name "role"`. Two regression tests now fail against the old shape.
+- Deployed evidence, exercised through the public Netlify origin (proxy + CORS + cookies +
+  CSRF + auth all included): register `201`, review `201` in 3.4 s with persisted findings,
+  explain `200` (5 key points), improve `200` (3 changes), all on `gemini-3.1-flash-lite`.
+  Details: `docs/ai/GEMINI_LIVE_VERIFICATION.md`.
+
+### CI is green, and the two failures were real defects
+
+- **`browser-qa` 360 px overflow** (#12): not flakiness. `#nav-email` and `.wb-account-slot`
+  had no width rule, so overflow scaled with the signed-in email length — 5 px on CI,
+  **63 px** at 390 px wide. Fixed with truncation + `min-width:0`; overflow is now 0 px at
+  320/360/390/430. Measured before the change, re-measured after.
+- **Dependency majors** (#8, #13): express `4.22.3 → 5.3.0` and express-rate-limit
+  `7.5.1 → 8.7.4`. The rate-limit bump was *green in CI but unsafe*: v8 flagged three
+  `keyGenerator`s for returning a bare `req.ip` (`ERR_ERL_KEY_GEN_IPV6`), which lets an IPv6
+  client rotate addresses and bypass the limit. Fixed with `ipKeyGenerator` + 6 regression
+  tests (2 fail against the old generators). Dependabot #9 was closed in favour of #13.
+
+### Documentation corrections
+
+- Three stale "backend not deployed" claims corrected (#11).
+- `.env.example` no longer points at a retired model, and the Render guide's activation steps
+  name a model that was actually observed returning 200.
+- The Atlas network-access trade-off, the free-tier limits and the new IPv6 bucket semantics
+  are recorded in `docs/implementation/KNOWN_LIMITATIONS.md`.
+
+### Preserved
+
+- `v1.0.0` release and every merged PR commit are untouched; no force-push, no branch
+  protection bypass, no rewritten history.
+- Verification-run accounts/reviews were deleted from Atlas; the real user account was kept.
+
+---
+
+# v1.0.0 — CodeSense AI Workbench Release
+
 **Date:** 2026-11-16
 **Codename:** *Workbench*
 **Scope:** the existing CodeSense AI application, continued and improved (no rewrite).
