@@ -159,8 +159,35 @@ Evidence and details: `docs/testing/` (strategy, Playwright report, regression r
 
 ## Deployment status (honest)
 
-- **Frontend:** static deployment on Netlify (SPA redirect + cache headers via `netlify.toml`). The deployed frontend requires a running backend for authenticated features — it is **not** a complete production application by itself.
-- **Backend:** **not deployed** — no production database, API host, or provider credentials exist for this project. Running the backend is a documented local-development workflow (above). The CD workflow reports an explicit BLOCKED state rather than pretending to deploy when its secrets are absent.
+Live and verified on **free tiers only** (2026-11-17):
+
+| Component | URL | Host / plan |
+| --- | --- | --- |
+| Frontend | <https://codesenseai-review.netlify.app> | Netlify (static, free) |
+| Backend API | <https://codesense-ai-backend-9skh.onrender.com> | Render **Free** web service, Singapore |
+| Database | Atlas cluster `ym9wxlr` / db `codesense_ai` | MongoDB Atlas free tier |
+
+- The frontend reaches the API through a **same-origin proxy**: `/api/*` on the Netlify
+  site is rewritten to the Render service (`frontend/_redirects`), so the session cookie
+  stays first-party (`SameSite=Lax; Secure; HttpOnly`) and CSRF headers pass through.
+- Health: <https://codesense-ai-backend-9skh.onrender.com/api/v1/health/live> →
+  `{"status":"ok"}`; readiness at `/api/v1/health/ready` reports
+  `{"database":"connected","provider":"…"}`.
+- **AI reviews** use Gemini server-side only (`GEMINI_API_KEY` + `GEMINI_MODEL` in Render's
+  environment dashboard — never in the browser, never in git). The model is **validated
+  against the live API** (`gemini-2.5-flash`); the retired `gemini-1.5-flash-latest` from
+  the old `.env.example` is not used. When the key is absent the API fails honestly
+  (`502` review / `503` assist, `provider: not-configured` in `/health/ready`) and never
+  returns mock or simulated findings. Activation runbook:
+  [`docs/ai/GEMINI_CONFIGURATION.md`](docs/ai/GEMINI_CONFIGURATION.md).
+- Render Free spins the service down after ~15 minutes of inactivity: the measured first
+  request after a real spin-down took **22.5 s** (then 197–725 ms warm). Sessions are
+  stored in Atlas, so a restart does not log users out —
+  see [`docs/deployment/COLD_START_MEASUREMENT.md`](docs/deployment/COLD_START_MEASUREMENT.md).
+- Full deployment record, environment variables, verification evidence and free-tier
+  limits: [`docs/deployment/RENDER_FREE_DEPLOYMENT.md`](docs/deployment/RENDER_FREE_DEPLOYMENT.md).
+- The CD workflow still deploys the frontend only; the backend is deployed by Render from
+  `main` (`rootDir: backend`, auto-deploy on push). No secret is committed to the repo.
 
 ---
 

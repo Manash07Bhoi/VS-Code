@@ -1,0 +1,15 @@
+# CodeSense AI — response headers for static assets.
+# No build step, so asset filenames are not content-hashed: short max-age
+# with mandatory revalidation (Netlify ETags make unchanged assets cheap).
+/js/*
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+/css/*
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+/assets/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  X-Content-Type-Options: nosniff
+/index.html
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
