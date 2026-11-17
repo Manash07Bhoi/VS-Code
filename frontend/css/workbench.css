@@ -56,6 +56,19 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
+  min-width: 0;
+}
+
+/* Same defect inside the workbench title bar: the account slot had no rule at
+ * all, so a long email pushed the title-bar controls past the viewport edge at
+ * 360px. Constrain and truncate. */
+.wb-account-slot {
+  display: inline-block;
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 .wb-btn {
   display: inline-flex;
