@@ -266,9 +266,15 @@ silently falling back to fabricated output.
 
 ## 8. Cold starts and Render Free limitations
 
-Render's free web services **spin down after 15 minutes without traffic** and take
-tens of seconds to wake. Measured wake-up for this service: see
-`docs/deployment/COLD_START_MEASUREMENT.md` (recorded from an idle period).
+Render's free web services **spin down after ~15 minutes without traffic** and take
+tens of seconds to wake. Measured on this service (full record:
+[`COLD_START_MEASUREMENT.md`](COLD_START_MEASUREMENT.md)):
+
+- 16.0 min idle → **no spin-down** (still warm, 326 ms)
+- 20.5 min idle → **real cold start: 22.5 s** for the first request, then 197–725 ms
+
+A session created before the spin-down still authenticated afterwards, so restarts do
+not log users out (sessions live in Atlas).
 
 | Limitation | Impact | Mitigation |
 | --- | --- | --- |

@@ -178,8 +178,10 @@ Live and verified on **free tiers only** (2026-11-17):
   server."` and `POST /api/v1/assist` returns `503 PROVIDER_UNAVAILABLE`. No mock or
   simulated AI output is ever returned. Set the `GEMINI_API_KEY` environment variable in
   Render to activate real reviews — no code change needed.
-- Render Free spins the service down after 15 minutes of inactivity; the first request
-  afterwards is slow. Sessions are stored in Atlas, so a restart does not log users out.
+- Render Free spins the service down after ~15 minutes of inactivity: the measured first
+  request after a real spin-down took **22.5 s** (then 197–725 ms warm). Sessions are
+  stored in Atlas, so a restart does not log users out —
+  see [`docs/deployment/COLD_START_MEASUREMENT.md`](docs/deployment/COLD_START_MEASUREMENT.md).
 - Full deployment record, environment variables, verification evidence and free-tier
   limits: [`docs/deployment/RENDER_FREE_DEPLOYMENT.md`](docs/deployment/RENDER_FREE_DEPLOYMENT.md).
 - The CD workflow still deploys the frontend only; the backend is deployed by Render from
