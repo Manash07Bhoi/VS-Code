@@ -1,0 +1,59 @@
+# CodeSense AI — Render Blueprint (optional, documentation + reproduction)
+#
+# The live service `codesense-ai-backend` was created through the Render API with
+# exactly this configuration; this file records it and lets anyone reproduce the
+# deployment from scratch (Render dashboard → New → Blueprint → pick this repo).
+#
+# Free plan only. No paid resource is requested anywhere in this file.
+#
+# Database note: MongoDB Atlas free clusters have no fixed egress on Render's free
+# tier, so Atlas Network Access must allow 0.0.0.0/0 (see
+# docs/deployment/RENDER_FREE_DEPLOYMENT.md).
+
+services:
+  - type: web
+    name: codesense-ai-backend
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    rootDir: backend
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/v1/health/live
+    autoDeploy: true
+    envVars:
+      # Non-secret runtime settings (safe to commit).
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      # Required behind Render's TLS-terminating proxy: per-client rate limiting
+      # and req.secure both depend on trusting X-Forwarded-For/Proto.
+      - key: TRUST_PROXY
+        value: "true"
+      - key: SECURE_COOKIES
+        value: "true"
+      # API is same-origin with the frontend via the Netlify /api/* proxy.
+      - key: COOKIE_SAMESITE
+        value: lax
+      - key: SESSION_MAX_AGE_MS
+        value: "604800000"
+      - key: LOG_LEVEL
+        value: info
+      - key: FRONTEND_ORIGIN
+        value: https://codesenseai-review.netlify.app
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash-latest
+      # Secrets: never committed. `sync: false` prompts for the value in the
+      # dashboard; `generateValue: true` creates a strong random value at creation.
+      - key: MONGODB_URI
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      # Left unset on the current deployment: AI reviews return an honest
+      # "provider not configured" failure until a real key is supplied.
+      - key: GEMINI_API_KEY
+        sync: false

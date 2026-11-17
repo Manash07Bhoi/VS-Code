@@ -5,18 +5,21 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# SPA fallback: every client route serves index.html so hash-routing and
-# direct URL navigation work after a refresh.
+# Same-origin API proxy to the deployed Render backend. Declared BEFORE the
+# SPA fallback because Netlify evaluates redirects in order. Keeping the API
+# on the site's own origin keeps the cs.sid cookie first-party (SameSite=Lax).
+[[redirects]]
+  from = "/api/*"
+  to = "https://codesense-ai-backend-9skh.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback: every client route serves index.html.
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  conditions = {Path = ["/*"]}
 
-# Static asset caching. This project has NO build step, so asset filenames
-# are not content-hashed — "immutable" long caching would keep serving stale
-# JS/CSS to returning visitors after a deploy. Instead: short max-age with
-# mandatory revalidation; Netlify's ETags make unchanged assets cheap 304s.
 [[headers]]
   for = "/js/*"
   [headers.values]
@@ -29,7 +32,6 @@
     Cache-Control = "public, max-age=300, must-revalidate"
     X-Content-Type-Options = "nosniff"
 
-# Brand/image assets change rarely but are also not hash-named.
 [[headers]]
   for = "/assets/*"
   [headers.values]
