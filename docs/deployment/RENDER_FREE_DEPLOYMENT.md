@@ -87,8 +87,8 @@ git**; `.env` is git-ignored and `.env.example` lists names only.
 | `SESSION_MAX_AGE_MS` | `604800000` (7 days) |
 | `LOG_LEVEL` | `info` |
 | `NODE_VERSION` | `20` |
-| `GEMINI_MODEL` | `gemini-1.5-flash-latest` |
-| `GEMINI_API_KEY` | **not set** — see §7 |
+| `GEMINI_MODEL` | `gemini-3.1-flash-lite` (validated against the live API) |
+| `GEMINI_API_KEY` | set server-side only — never committed, never in the frontend (§7) |
 
 Rate-limit and provider tuning variables (`RATE_LIMIT_*`, `GEMINI_TIMEOUT_MS`,
 `GEMINI_MAX_RETRIES`, `GEMINI_MAX_OUTPUT_CHARS`, `REVIEW_SOURCE_SIZE_LIMIT_BYTES`)
@@ -251,13 +251,14 @@ To activate real AI reviews (no code change required) follow
 
 1. Render dashboard → service `codesense-ai-backend` → Environment.
 2. Add `GEMINI_API_KEY` = your key (server-side only; never in the frontend, never in git).
-3. Set `GEMINI_MODEL=gemini-2.5-flash`.
+3. Set `GEMINI_MODEL=gemini-3.1-flash-lite`.
 
-   **Model name was validated against the live API**, not copied from `.env.example`:
-   a `models.list` call returned 200 with 49 `generateContent`-capable models, and
-   `gemini-1.5-flash-latest` (the `.env.example` value) is **not** among them — the 1.5
-   family is retired. `gemini-2.5-flash` is present, stable, versioned, and free-tier
-   eligible.
+   **Model name was validated against the live API**, not copied from `.env.example`.
+   Measured on 2026-11-17: `gemini-3.1-flash-lite` and `gemini-3.5-flash-lite` returned
+   HTTP 200; `gemini-2.5-flash` and `gemini-2.5-flash-lite` return **404 — no longer
+   available to new users**; the `gemini-1.5-*` names in the old example no longer exist.
+   The full table is in `docs/ai/GEMINI_CONFIGURATION.md`. The deployed service runs
+   `gemini-3.1-flash-lite`.
 4. Save (Render redeploys) and verify:
    `curl -s https://codesense-ai-backend-9skh.onrender.com/api/v1/health/ready`
    should report `"provider":"configured"`. Presence is not validity: a wrong key still

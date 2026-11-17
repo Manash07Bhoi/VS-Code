@@ -23,7 +23,7 @@
 | `SESSION_SECRET` | Long random string (generate per deploy) |
 | `RATE_LIMIT_MAX_AUTH_IP` | Per-IP cap across all auth attempts (default 60) |
 | `GEMINI_API_KEY` | Real Gemini API key. Optional — backend starts without it and returns an honest provider-unavailable state. |
-| `GEMINI_MODEL` | `gemini-1.5-flash-latest`. Optional when no API key is configured. |
+| `GEMINI_MODEL` | Empty by default (provider not configured). Set to a name validated against the live API — `gemini-3.1-flash-lite` as of 2026-11-17. |
 | `FRONTEND_ORIGIN` | `https://your-domain.com` |
 | `SECURE_COOKIES` | `true` |
 | `SESSION_MAX_AGE_MS` | `604800000` (7 days) |
