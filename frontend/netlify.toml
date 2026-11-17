@@ -22,23 +22,21 @@
   to = "/404.html"
   status = 404
 
-# Baseline security headers for the HTML entry points (the asset rules below
-# only cover /js, /css and /assets).
+# Baseline security headers on EVERY response, including the custom 404 (which
+# matches no path-specific block). Cache rules stay specific below.
 [[headers]]
-  for = "/"
+  for = "/*"
   [headers.values]
-    Cache-Control = "no-cache"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
 
 [[headers]]
-  for = "/404.html"
+  for = "/"
   [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cache-Control = "no-cache"
+
 
 [[headers]]
   for = "/js/*"
