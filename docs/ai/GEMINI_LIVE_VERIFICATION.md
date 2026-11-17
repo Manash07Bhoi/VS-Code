@@ -87,10 +87,44 @@ Verified that the new tests fail against the old code (2 failures) and pass agai
 
 ---
 
-## Stage 2 — deployed service
+## Stage 2 — deployed service (2026-11-17, after the fix was merged and deployed)
 
-Recorded after the fix was merged and deployed; see the deployment report for the live
-status codes, latencies and the persisted review records.
+Environment: `main` @ `930e775` on Render Free, `GEMINI_MODEL=gemini-3.1-flash-lite`,
+exercised **through the public Netlify origin** (`https://codesenseai-review.netlify.app/api/v1`),
+so the proxy, CORS, cookies, CSRF and auth path are all included — not a direct-to-Render call.
+
+```
+GET  /health/ready            200    438 ms   {"database":"connected","provider":"configured"}
+GET  /auth/csrf-token         200    301 ms   session token issued
+POST /auth/register           201   2392 ms   real account created
+GET  /auth/csrf-token         200    275 ms   token rotated after session regeneration
+GET  /auth/me                 200    367 ms   session valid
+POST /reviews                 201   3460 ms   status=completed | provider=gemini | model=gemini-3.1-flash-lite
+POST /assist (explain)        200   2691 ms   keyPoints: 5
+POST /assist (improve)        200   2652 ms   changes: 3
+GET  /reviews?page=1          200    501 ms   persisted record returned
+GET  /languages               200    277 ms   5 languages
+```
+
+Review of a string-concatenated SQL handler — persisted record (read back from Atlas, not
+from the create response):
+
+```
+findings: 2
+[security/critical]  line 5  SQL Injection Vulnerability
+[bug/correctness/medium] line 5-7  Missing Error Handling
+```
+
+Both locations match real defects in the submitted source. A second snippet produced
+`[medium] Potential TypeError ... line 3` and `[low] Use of var instead of const/let`, i.e.
+the model is reading the actual code rather than emitting a fixed template.
+
+Rate limiting was re-verified on the deployed service after the `express-rate-limit` 8
+migration (13 wrong-password logins): `401 ×10` then `429 ×3`, `RateLimit-Policy: 10;w=60`,
+body `{"error":{"code":"RATE_LIMITED",...}}` — the limiter still enforces.
+
+All verification accounts, their reviews and sessions were deleted from Atlas afterwards;
+only the real user account remains.
 
 ## Honesty notes
 

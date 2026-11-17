@@ -8,8 +8,9 @@ Reviewed: 2026-11-17. Production dependencies (`npm audit --omit=dev`): **0 vuln
 | PR | Package | Change | State | Outcome |
 | --- | --- | --- | --- | --- |
 | #10 | *(own work)* deployment config/docs | — | open | merged |
-| #9 | `express-rate-limit` | `7.5.1 → 8.7.4` (major) | open | **deferred** — requires a coordinated code change |
-| #8 | `express` | `4.22.3 → 5.3.0` (major) | open | **deferred** — verified compatible, scheduled separately |
+| #13 | `express-rate-limit` + fix | `7.5.1 → 8.7.4` (major) | merged (`930e775`) | **merged** — with the IPv6-safe key generators #9 needed |
+| #9 | `express-rate-limit` | `7.5.1 → 8.7.4` (major) | closed | superseded by #13 |
+| #8 | `express` | `4.22.3 → 5.3.0` (major) | merged (`2fb63a1`) | **merged** — verified compatible |
 | #7 | `@google/generative-ai` | `0.21.0 → 0.24.1` | merged | already in `main` |
 | #4 | `puppeteer` (dev) | `22.6.0 → 25.17.0` | merged | already in `main` |
 | #3 | `mongoose` | `8.24.9 → 9.12.1` | merged | already in `main` |
@@ -18,6 +19,42 @@ Reviewed: 2026-11-17. Production dependencies (`npm audit --omit=dev`): **0 vuln
 
 No PR is a security advisory response for a currently-unfixed vulnerability: `npm audit`
 reports none at any severity, so no merge below is forced by a CVE.
+
+## Resolution (2026-11-17) — both major bumps landed
+
+Both bumps are now merged, and neither was merged on the strength of a green tick.
+
+### express 5.3.0 — merged (#8, `2fb63a1`)
+
+Evidence on the exact commit: backend suite `19/19 pass`, and `browser-qa: success`, which
+drives a real browser through register/login/review (so express-session, cookie handling and
+CSRF all work under v5). Source audit found no `app.del()`, `res.sendfile()`, `req.param()`,
+`res.redirect('back')` or string-wildcard routes; the SPA fallback is a regex route
+(`app.get(/^\/((?!api).)*$/)`), which v5 still supports. Express 5 additionally forwards
+rejected promises from async handlers to the error middleware. Re-verified live after deploy:
+`/health/ready` 200, review 201, explain/improve 200.
+
+### express-rate-limit 8.7.4 — merged as #13 (`930e775`), #9 closed
+
+The deferral reason was real and turned into a code fix rather than a merged regression:
+
+| config | `ERR_ERL_KEY_GEN_IPV6` occurrences (real express app) |
+| --- | --- |
+| old key generators (bare `req.ip`) | **4** |
+| fixed (`ipKeyGenerator`) | **0** |
+
+All address-derived keys now pass through the bundled `ipKeyGenerator` helper, which
+collapses IPv6 to its subnet and leaves IPv4 untouched. Six regression tests were added in
+`backend/tests/rateLimit.test.js`; the two bypass tests fail against the previous generators.
+The suite was also wired into the `test` script — `package.json` lists test files explicitly,
+so the new file had been silently skipped (CI reported 21 tests instead of 27).
+
+Post-deploy check on the live service: 13 wrong-password logins returned `401 ×10` then
+`429 ×3`, with `RateLimit-Policy: 10;w=60` — the limiter still enforces with the new keys.
+
+---
+
+## Original deferred analysis (retained for the record)
 
 ## PR #9 — express-rate-limit 8.7.4 (deferred, with evidence)
 
