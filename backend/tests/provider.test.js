@@ -379,3 +379,80 @@ describe('GeminiAdapter — total operation deadline', () => {
     assert.strictEqual(code, 'PROVIDER_TIMEOUT');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Regression: the real SDK request shape (Critical — found only against the
+// live API). The adapter previously passed a bare Content[] array as the
+// request body and generationConfig in the requestOptions slot. The mocked
+// transport accepted anything, so the suite passed while every real call
+// failed with "400 Invalid JSON payload received. Unknown name \"role\"
+// at 'contents[0].parts[0]'". These tests pin the serialized contract.
+// ---------------------------------------------------------------------------
+describe('Gemini request shape (real API contract)', () => {
+  it('sends { contents, generationConfig } as the body and options separately', async () => {
+    let capturedBody;
+    let capturedOptions;
+    const adapter = new GeminiAdapter({
+      apiKey: 'test-key-not-used',
+      model: 'gemini-3.1-flash-lite',
+      timeoutMs: 5000,
+      maxRetries: 0,
+      maxOutputChars: 32768,
+      genAI: {
+        getGenerativeModel: () => ({
+          generateContent: async (body, options) => {
+            capturedBody = body;
+            capturedOptions = options;
+            return successResponse([]);
+          },
+        }),
+      },
+    });
+
+    await adapter.analyze({ source: 'const a = 1;', language: 'javascript', focus: null });
+
+    // Body must be an object with a contents array — never a bare array.
+    assert.strictEqual(Array.isArray(capturedBody), false, 'body must not be a bare array');
+    assert.ok(Array.isArray(capturedBody.contents), 'body.contents must be an array');
+    assert.strictEqual(capturedBody.contents[0].role, 'user');
+    assert.ok(Array.isArray(capturedBody.contents[0].parts));
+
+    // generationConfig belongs in the body, not in request options.
+    assert.ok(capturedBody.generationConfig, 'generationConfig must be inside the request body');
+    assert.strictEqual(capturedBody.generationConfig.responseMimeType, 'application/json');
+    assert.strictEqual(typeof capturedBody.generationConfig.maxOutputTokens, 'number');
+
+    // The second argument carries cancellation only.
+    assert.ok(capturedOptions && capturedOptions.signal, 'request options must carry an AbortSignal');
+    assert.strictEqual(capturedOptions.generationConfig, undefined,
+      'generationConfig must NOT be passed in request options');
+  });
+
+  it('sends the same shape for assist(explain) and assist(improve)', async () => {
+    for (const action of ['explain', 'improve']) {
+      let body;
+      const adapter = new GeminiAdapter({
+        apiKey: 'test-key-not-used',
+        model: 'gemini-3.1-flash-lite',
+        timeoutMs: 5000,
+        maxRetries: 0,
+        maxOutputChars: 32768,
+        genAI: {
+          getGenerativeModel: () => ({
+            generateContent: async (b) => {
+              body = b;
+              const payload = action === 'explain' ?
+                { explanation: 'It assigns a value.', keyPoints: ['a'], caveats: null } :
+                { improvedCode: 'const a = 1;', changes: [], summary: 'Same.', caveats: null };
+              return { response: { text: () => JSON.stringify(payload) } };
+            },
+          }),
+        },
+      });
+      await adapter.assist({ source: 'var a = 1;', language: 'javascript', action });
+      assert.strictEqual(Array.isArray(body), false, `${action}: body must not be a bare array`);
+      assert.ok(Array.isArray(body.contents), `${action}: body.contents must be an array`);
+      assert.ok(body.generationConfig, `${action}: generationConfig must be in the body`);
+    }
+  });
+});

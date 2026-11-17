@@ -15,25 +15,52 @@ The backend is the only component that ever holds the key.
 The SDK (`@google/generative-ai`) is server-side only; the browser bundle contains no
 Model/API-key reference (`git grep` for `AIza`/`GEMINI_API_KEY` in `frontend/` → 0 hits).
 
-## Model name — validated against the live API, not copied from `.env.example`
+## Model name — validated by a real generateContent call, not by the model list
 
-`.env.example` shipped `gemini-1.5-flash-latest`. A live
-`GET https://generativelanguage.googleapis.com/v1beta/models` call (200 OK, 49 models
-supporting `generateContent`) does **not** list `gemini-1.5-flash-latest` — the 1.5 family
-is retired. Deploying that value would have produced permanent provider errors.
+Two traps were hit while activating this, both now documented and tested:
 
-Available flash-tier models observed at validation time include:
+**Trap 1 — `models.list` is not an availability check.** A `models.list` call returns 49
+`generateContent`-capable models, but several of them answer a real request with
+`404 ... is no longer available to new users`. Presence in the list proves nothing.
 
-| Model | Input tokens | Output tokens |
-| --- | --- | --- |
-| `gemini-2.5-flash` | 1,048,576 | 65,536 |
-| `gemini-2.5-flash-lite` | 1,048,576 | 65,536 |
-| `gemini-flash-latest` | 1,048,576 | 65,536 |
+**Trap 2 — the request body shape was wrong.** The adapter sent a bare `Content[]` array as
+the request body and put `generationConfig` in the *request options* slot. The unit tests
+injected a fake transport, so no body was ever serialised and the suite passed while every
+real call failed with:
 
-**Selected: `gemini-2.5-flash`** — a stable, versioned, free-tier-eligible name (not a
-`-latest` alias that can silently move), with a large input window and a 65,536-token
-output ceiling that comfortably covers `GEMINI_MAX_OUTPUT_CHARS` (32,768 chars ≈ 8k tokens
-for the request's `maxOutputTokens`).
+```
+400 Invalid JSON payload received. Unknown name "role" at 'contents[0].parts[0]'
+```
+
+Fixed in `backend/src/providers/gemini.js` (body is now
+`{ contents: [{role, parts}], generationConfig }`, with the AbortSignal in request options)
+and pinned by two regression tests in `backend/tests/provider.test.js` that assert the
+serialised contract and fail against the old code.
+
+### Measured availability (same key, one session, 2026-11-17)
+
+| Model | Result of a real `generateContent` call |
+| --- | --- |
+| `gemini-3.1-flash-lite` | **HTTP 200**, ~2–8 s, valid JSON ✅ |
+| `gemini-3.5-flash-lite` | **HTTP 200**, ~8 s, valid JSON ✅ |
+| `gemini-2.5-flash` | 404 — no longer available to new users |
+| `gemini-2.5-flash-lite` | 404 — no longer available to new users |
+| `gemini-3.5-flash` | 503 — high demand |
+| `gemini-3.6-flash` | 503 — high demand |
+| `gemini-3.8-flash` | timeout (>45 s) at time of testing |
+| `gemini-flash-latest` | timeout (>45 s) at time of testing |
+| `gemini-3.7-flash` | timeout (>15 s) at time of testing |
+
+**Selected: `gemini-3.1-flash-lite`** — a stable, versioned, non-preview name that answered
+real requests reliably, with a 1M-token input window and a 65,536-token output ceiling
+(the adapter caps output at `GEMINI_MAX_OUTPUT_CHARS=32768`).
+
+`gemini-1.5-flash-latest` from the old `.env.example` does not exist at all any more.
+
+The higher flash tiers are currently overloaded rather than access-denied (503/timeout, not
+403/404), so they can be selected later by changing one environment variable — no code
+change. The adapter already retries 429/503/504 with backoff, which is what rides out those
+transient 503s.
 
 ## Cost control (budget stays zero)
 
@@ -53,7 +80,7 @@ findings.
 
 1. Render dashboard → service `codesense-ai-backend` → **Environment**:
    - `GEMINI_API_KEY` = your key (secret; never in git, never in the frontend).
-   - `GEMINI_MODEL` = `gemini-2.5-flash`.
+   - `GEMINI_MODEL` = `gemini-3.1-flash-lite` (verified working; see the table above).
 2. Save — Render redeploys automatically.
 3. Verify configuration is visible **without** disclosing it:
    ```bash
@@ -76,6 +103,7 @@ findings.
 ## What "verified" means here
 
 - Wiring, degradation, and status codes: verified live without a key.
-- Model name: verified against the live model list.
-- Real generation quality: verified only by an actual request with a real key — see the
-  deployment report for the recorded result of that test.
+- Model name: verified by real `generateContent` calls, not by the model list.
+- Real generation quality: verified with an actual key — see
+  [`GEMINI_LIVE_VERIFICATION.md`](GEMINI_LIVE_VERIFICATION.md) for recorded output,
+  latencies and status codes.

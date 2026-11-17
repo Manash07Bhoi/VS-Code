@@ -223,11 +223,21 @@ class GeminiAdapter {
       const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
 
       try {
+        // The Generative Language API expects a GenerateContentRequest body:
+        // { contents: Content[], generationConfig } — NOT a bare Content[]
+        // array, and generationConfig must live INSIDE the body (the second
+        // argument is request options only). The previous shape sent the array
+        // as the whole body, so Google rejected every real call with
+        // "400 Invalid JSON payload received. Unknown name \"role\" at
+        // 'contents[0].parts[0]'". Unit tests injected a fake transport and
+        // never serialized a body, so the defect was invisible until a real
+        // key was used.
         const result = await model.generateContent(
-          [
-            { role: 'user', parts: [{ text: prompt }] },
-          ],
-          { generationConfig, signal: controller.signal }
+          {
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig,
+          },
+          { signal: controller.signal }
         );
 
         const response = result.response;
