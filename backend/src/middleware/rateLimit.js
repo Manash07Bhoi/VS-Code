@@ -7,7 +7,29 @@
 
 const rateLimit = require('express-rate-limit');
 
+// express-rate-limit v8 requires IP-based keys to be normalised with the
+// bundled `ipKeyGenerator` helper. Returning a bare `req.ip` is flagged with
+// ERR_ERL_KEY_GEN_IPV6 because an attacker holding a /64 IPv6 range gets a
+// fresh bucket per address, which defeats the limit entirely. The helper
+// collapses IPv6 addresses to their subnet and passes IPv4 through unchanged.
+const { ipKeyGenerator } = rateLimit;
+
 const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
+
+// Key generators, exported for regression tests (tests/rateLimit.test.js).
+// Every branch that depends on the client address MUST go through
+// ipKeyGenerator so IPv6 clients cannot rotate within their own prefix.
+function authKey(req) {
+  return ipKeyGenerator(req.ip) + ':' + (req.body && req.body.email ? req.body.email : 'unknown');
+}
+
+function ipKey(req) {
+  return ipKeyGenerator(req.ip);
+}
+
+function reviewKey(req) {
+  return req.session && req.session.userId ? 'user:' + req.session.userId : 'ip:' + ipKeyGenerator(req.ip);
+}
 
 // Per-(IP, email) bucket: bounds brute-force attempts against a single
 // account from a single source.
@@ -16,9 +38,7 @@ const authLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_AUTH || '10', 10),
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: function (req) {
-    return req.ip + ':' + (req.body && req.body.email ? req.body.email : 'unknown');
-  },
+  keyGenerator: authKey,
   handler: function (req, res) {
     res.status(429).json({
       error: {
@@ -38,9 +58,7 @@ const authIpLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_AUTH_IP || '60', 10),
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: function (req) {
-    return req.ip;
-  },
+  keyGenerator: ipKey,
   handler: function (req, res) {
     res.status(429).json({
       error: {
@@ -57,9 +75,7 @@ const reviewLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_REVIEW || '30', 10),
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: function (req) {
-    return (req.session && req.session.userId ? 'user:' + req.session.userId : 'ip:' + req.ip);
-  },
+  keyGenerator: reviewKey,
   handler: function (req, res) {
     res.status(429).json({
       error: {
@@ -76,9 +92,7 @@ const generalLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_GENERAL || '100', 10),
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: function (req) {
-    return req.ip;
-  },
+  keyGenerator: ipKey,
   handler: function (req, res) {
     res.status(429).json({
       error: {
@@ -90,4 +104,11 @@ const generalLimiter = rateLimit({
   },
 });
 
-module.exports = { authLimiter, authIpLimiter, reviewLimiter, generalLimiter };
+module.exports = {
+  authLimiter,
+  authIpLimiter,
+  reviewLimiter,
+  generalLimiter,
+  // Exposed for tests only; not part of the HTTP surface.
+  keyGenerators: { authKey, ipKey, reviewKey },
+};
