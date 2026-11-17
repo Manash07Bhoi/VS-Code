@@ -246,17 +246,23 @@ built to degrade honestly, and that behaviour was verified:
 
 No mock findings, dummy reviews, or simulated AI output exist anywhere in the system.
 
-To activate real AI reviews later (no code change required):
+To activate real AI reviews (no code change required) follow
+[`docs/ai/GEMINI_CONFIGURATION.md`](../ai/GEMINI_CONFIGURATION.md). Summary:
 
 1. Render dashboard → service `codesense-ai-backend` → Environment.
 2. Add `GEMINI_API_KEY` = your key (server-side only; never in the frontend, never in git).
-3. Confirm `GEMINI_MODEL` is a model your key can access. The default carried over
-   from `.env.example` is `gemini-1.5-flash-latest`; if that model has been retired
-   for your key, set the current flash model name instead. **This value was not
-   validated against a live key in this deployment.**
+3. Set `GEMINI_MODEL=gemini-2.5-flash`.
+
+   **Model name was validated against the live API**, not copied from `.env.example`:
+   a `models.list` call returned 200 with 49 `generateContent`-capable models, and
+   `gemini-1.5-flash-latest` (the `.env.example` value) is **not** among them — the 1.5
+   family is retired. `gemini-2.5-flash` is present, stable, versioned, and free-tier
+   eligible.
 4. Save (Render redeploys) and verify:
    `curl -s https://codesense-ai-backend-9skh.onrender.com/api/v1/health/ready`
-   should report `"provider":"configured"`.
+   should report `"provider":"configured"`. Presence is not validity: a wrong key still
+   shows `configured` and then fails a real request with `PROVIDER_AUTH_ERROR` (502) —
+   that is the honest signal.
 
 Note: `GEMINI_MODEL` is already set but `GEMINI_API_KEY` is empty, so
 `providerAdapter()` returns `null` and every AI call fails honestly rather than

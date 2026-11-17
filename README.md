@@ -173,11 +173,13 @@ Live and verified on **free tiers only** (2026-11-17):
 - Health: <https://codesense-ai-backend-9skh.onrender.com/api/v1/health/live> →
   `{"status":"ok"}`; readiness at `/api/v1/health/ready` reports
   `{"database":"connected","provider":"…"}`.
-- **AI reviews are not enabled on this deployment:** no Gemini API key was configured, so
-  `POST /api/v1/reviews` returns an honest `502 "AI provider is not configured on the
-  server."` and `POST /api/v1/assist` returns `503 PROVIDER_UNAVAILABLE`. No mock or
-  simulated AI output is ever returned. Set the `GEMINI_API_KEY` environment variable in
-  Render to activate real reviews — no code change needed.
+- **AI reviews** use Gemini server-side only (`GEMINI_API_KEY` + `GEMINI_MODEL` in Render's
+  environment dashboard — never in the browser, never in git). The model is **validated
+  against the live API** (`gemini-2.5-flash`); the retired `gemini-1.5-flash-latest` from
+  the old `.env.example` is not used. When the key is absent the API fails honestly
+  (`502` review / `503` assist, `provider: not-configured` in `/health/ready`) and never
+  returns mock or simulated findings. Activation runbook:
+  [`docs/ai/GEMINI_CONFIGURATION.md`](docs/ai/GEMINI_CONFIGURATION.md).
 - Render Free spins the service down after ~15 minutes of inactivity: the measured first
   request after a real spin-down took **22.5 s** (then 197–725 ms warm). Sessions are
   stored in Atlas, so a restart does not log users out —
