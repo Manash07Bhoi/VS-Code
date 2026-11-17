@@ -1,15 +1,21 @@
-# CodeSense AI — response headers for static assets.
+# CodeSense AI — response headers.
+# Baseline security headers apply to EVERY response, including the custom 404
+# (an unknown path matches no other block, and the 404 response previously had
+# none). Cache rules stay path-specific; Netlify merges them with this block.
 # No build step, so asset filenames are not content-hashed: short max-age
 # with mandatory revalidation (Netlify ETags make unchanged assets cheap).
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
 /js/*
   Cache-Control: public, max-age=300, must-revalidate
-  X-Content-Type-Options: nosniff
 /css/*
   Cache-Control: public, max-age=300, must-revalidate
-  X-Content-Type-Options: nosniff
 /assets/*
   Cache-Control: public, max-age=3600, must-revalidate
-  X-Content-Type-Options: nosniff
+/
+  Cache-Control: no-cache
 /index.html
   Cache-Control: no-cache
-  X-Content-Type-Options: nosniff
