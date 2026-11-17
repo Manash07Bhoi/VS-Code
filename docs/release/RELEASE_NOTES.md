@@ -34,4 +34,9 @@ CodeSense AI is now **a VS Code-inspired AI-powered browser-based developer work
 
 ## Known limitations
 
-See `docs/implementation/KNOWN_LIMITATIONS.md` — direct and specific (no terminal/execution/debugging by design, no real Git, browser-local workspace, advisory-only AI findings, backend not deployed).
+See `docs/implementation/KNOWN_LIMITATIONS.md` — direct and specific (no terminal/execution/debugging by design, no real Git, browser-local workspace, advisory-only AI findings).
+
+> **Superseded (2026-11-17):** the "backend not deployed" limitation recorded for **v1.0.0** was
+> true at the time of that release. The backend is now deployed and verified on Render's free
+> tier — see `docs/deployment/RENDER_FREE_DEPLOYMENT.md`. This note is kept so the v1.0.0 record
+> stays historically accurate rather than being rewritten.

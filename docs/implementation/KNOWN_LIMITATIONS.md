@@ -29,7 +29,17 @@
 
 ## Deployment boundary
 
-14. **The backend is not deployed.** No production database, no production API, no production AI provider. The Netlify frontend deployment serves the static app; its authenticated features therefore require a locally-run backend. This is stated in the README and the final verification report — a frontend-only deployment is never presented as a complete production application.
+14. **The backend is deployed on free tiers, which are not production infrastructure.** Live at
+    <https://codesense-ai-backend-9skh.onrender.com> on Render Free with MongoDB Atlas free tier.
+    Documented limits: spin-down after ~15 min idle (measured cold start ~22 s), no static egress
+    IPs (so Atlas network access is broad — see `docs/security/ATLAS_NETWORK_ACCESS.md`), no
+    persistent disk, single instance, no autoscaling, and no managed backups. CI/CD for the
+    backend is a manual/API deploy, not push-triggered (the Render service is not linked to the
+    GitHub App). Sessions survive restarts because they live in Atlas.
+14b. **AI review depends on Gemini free-tier quota.** Model selection is validated against real
+    calls (`gemini-3.1-flash-lite`); higher flash tiers were returning 503/timeout at test time.
+    When quota is exhausted or the provider is unavailable the API returns an honest
+    rate-limited/unavailable status and never fabricates findings.
 15. **No production Lighthouse audit.** Audits in `tests/artifacts/lighthouse/` were run against the local full-stack environment (real backend) — see `docs/testing/LIGHTHOUSE_REPORT.md` for scope and the one accepted Best-Practices deduction (the anonymous `/auth/me` 401 boot-check).
 
 ## Testing scope

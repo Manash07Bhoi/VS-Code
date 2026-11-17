@@ -53,7 +53,16 @@
 ## Deployment reality
 
 - The **frontend is deployed to Netlify** (static; `netlify.toml` SPA redirect + cache headers). See `release/FINAL_VERIFICATION_REPORT.md` for its current verified status.
-- The **backend is NOT deployed** — deliberately out of scope for this release. Running it requires MongoDB, session/CSRF secrets, and (optionally) a Gemini API key; see `backend/.env.example`. No production-backend claims are made anywhere.
+- The **backend IS deployed** on Render's free tier: <https://codesense-ai-backend-9skh.onrender.com>
+  (`rootDir: backend`, `npm ci --omit=dev` / `npm start`), backed by MongoDB Atlas (`codesense_ai`)
+  with sessions persisted in the `sessions` collection and Gemini called server-side only.
+- The frontend reaches the API through a **same-origin proxy** (`frontend/_redirects`:
+  `/api/*` → the Render service, declared before the SPA fallback), so the `cs.sid` session
+  cookie stays first-party with `SameSite=Lax`.
+- Operational record, environment variables, verification evidence and free-tier limits:
+  `docs/deployment/RENDER_FREE_DEPLOYMENT.md`. This is a **free-tier deployment**, not
+  production-grade infrastructure (no static egress IPs, no persistent disk, ~15 min
+  idle spin-down with a measured ~22 s cold start).
 
 ## Key invariants
 
