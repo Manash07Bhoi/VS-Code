@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node --test tests/auth.test.js tests/languages.test.js tests/reviews.test.js tests/provider.test.js tests/assist.test.js",
+    "test": "node --test tests/auth.test.js tests/languages.test.js tests/reviews.test.js tests/provider.test.js tests/assist.test.js tests/rateLimit.test.js",
     "lint": "eslint src tests server.js",
     "seed-indexes": "node scripts/ensure-indexes.js"
   },
@@ -20,7 +20,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^5.3.0",
-    "express-rate-limit": "^7.5.0",
+    "express-rate-limit": "^8.7.4",
     "express-session": "^1.18.1",
     "helmet": "^8.0.0",
     "mongoose": "^9.12.1",
